@@ -6,7 +6,10 @@ function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Auth
+  // --------------------------------------------------
+  // AUTH
+  // --------------------------------------------------
+
   const [authMode, setAuthMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,21 +18,36 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false)
   const [authMessage, setAuthMessage] = useState('')
 
-  // Approval
+  // --------------------------------------------------
+  // APPROVAL
+  // --------------------------------------------------
+
   const [approved, setApproved] = useState(false)
   const [checkingApproval, setCheckingApproval] = useState(false)
 
-  // Support
+  // --------------------------------------------------
+  // CUSTOMER SUPPORT
+  // --------------------------------------------------
+
   const [showSupport, setShowSupport] = useState(false)
   const [supportMessage, setSupportMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
   const [messages, setMessages] = useState([])
 
-  // Wallet / Withdraw pages
+  // --------------------------------------------------
+  // PAGES
+  // --------------------------------------------------
+
   const [showWallet, setShowWallet] = useState(false)
   const [showWithdraw, setShowWithdraw] = useState(false)
+  const [showTransfer, setShowTransfer] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
-  // Your demo BTC wallet address
+  // --------------------------------------------------
+  // DEMO BTC WALLET ADDRESS
+  // --------------------------------------------------
+
   const walletAddress =
     'bc1qwx90w9s588gyev4qrw45fe57gq5pwrhctte8f2'
 
@@ -111,7 +129,7 @@ function App() {
   }, [session?.user?.id])
 
   // --------------------------------------------------
-  // LOAD USER SUPPORT MESSAGES
+  // LOAD SUPPORT MESSAGES
   // --------------------------------------------------
 
   async function loadMessages() {
@@ -153,7 +171,7 @@ function App() {
   }, [session?.user?.id, approved])
 
   // --------------------------------------------------
-  // SIGN IN
+  // LOGIN
   // --------------------------------------------------
 
   async function handleLogin(e) {
@@ -190,7 +208,7 @@ function App() {
   }
 
   // --------------------------------------------------
-  // CREATE ACCOUNT
+  // SIGN UP
   // --------------------------------------------------
 
   async function handleSignUp(e) {
@@ -277,11 +295,17 @@ function App() {
 
     setSession(null)
     setApproved(false)
+
     setShowSupport(false)
     setShowWallet(false)
     setShowWithdraw(false)
+    setShowTransfer(false)
+    setShowAbout(false)
+    setShowMenu(false)
+
     setMessages([])
     setSupportMessage('')
+
     setEmail('')
     setPassword('')
     setConfirmPassword('')
@@ -636,7 +660,7 @@ function App() {
           </h1>
 
           <p className="wallet-description">
-            This is your  Bitcoin wallet address.
+            This is your Bitcoin wallet address.
           </p>
 
           <div className="wallet-address-card">
@@ -662,14 +686,13 @@ function App() {
           <div className="wallet-info">
 
             <strong>
-              Important
+               Information
             </strong>
 
             <p>
-              Only send Bitcoin (BTC) to this
-              Bitcoin address. This  wallet
-              process  banking
-              transactions.
+              Address Information
+
+Your registered address and contact details associated with your account.
             </p>
 
           </div>
@@ -687,6 +710,135 @@ function App() {
             type="button"
             className="wallet-back-button"
             onClick={() => setShowWallet(false)}
+          >
+            ← Back to Account
+          </button>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // TRANSFER SCREEN
+  // --------------------------------------------------
+
+  function TransferBox() {
+    return (
+      <div className="messages-page transfer-page">
+
+        <div className="messages-header">
+
+          <button
+            type="button"
+            className="back-button"
+            onClick={() => setShowTransfer(false)}
+          >
+            ←
+          </button>
+
+          <div className="support-avatar">
+            ↗
+          </div>
+
+          <div className="messages-title">
+
+            <strong>
+              Transfer
+            </strong>
+
+            <span>
+               Transaction History
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="transfer-content">
+
+          <div className="transfer-icon">
+            ✓
+          </div>
+
+          <h1>
+            Last  Transfer
+          </h1>
+
+          <p className="transfer-description">
+            Your most recent  transaction
+            record.
+          </p>
+
+          <div className="transaction-card">
+
+            <div className="transaction-row">
+              <span>
+                Recipient
+              </span>
+
+              <strong>
+                Alex JOhn
+              </strong>
+            </div>
+
+            <div className="transaction-row">
+              <span>
+                Amount
+              </span>
+
+              <strong>
+                $2,500.00
+              </strong>
+            </div>
+
+            <div className="transaction-row">
+              <span>
+                Date
+              </span>
+
+              <strong>
+                July 12, 2026
+              </strong>
+            </div>
+
+            <div className="transaction-row">
+              <span>
+                Type
+              </span>
+
+              <strong>
+                Demo Bank Transfer
+              </strong>
+            </div>
+
+            <div className="transaction-row">
+              <span>
+                Status
+              </span>
+
+              <strong className="transaction-status">
+                Completed
+              </strong>
+            </div>
+
+          </div>
+
+          <div className="demo-notice">
+            <strong>
+              Transaction
+            </strong>
+
+            <p>
+             Crestline Bank helps you manage your money and support your business with simple, secure banking services.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="wallet-back-button"
+            onClick={() => setShowTransfer(false)}
           >
             ← Back to Account
           </button>
@@ -744,7 +896,7 @@ function App() {
           </h1>
 
           <p>
-            This service is currently unavailable
+            This  service is currently unavailable
             because the site is undergoing maintenance.
           </p>
 
@@ -780,6 +932,268 @@ function App() {
           >
             ← Back to Account
           </button>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // ABOUT SCREEN
+  // --------------------------------------------------
+
+  function AboutBox() {
+    return (
+      <div className="messages-page">
+
+        <div className="messages-header">
+
+          <button
+            type="button"
+            className="back-button"
+            onClick={() => setShowAbout(false)}
+          >
+            ←
+          </button>
+
+          <div className="support-avatar">
+            ◆
+          </div>
+
+          <div className="messages-title">
+
+            <strong>
+              About Crestline Bank
+            </strong>
+
+            <span>
+              Personal Banking
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="about-content">
+
+          <div className="about-card">
+
+            <div className="about-logo">
+              ◆
+            </div>
+
+            <h1>
+              Crestline Bank
+            </h1>
+
+            <h3>
+              Crestline Account
+            </h3>
+
+            <p>
+               Crestline Bank was created to help  users, manage  finances and support their business activities. It give   convenient and secure way to handle  personal funds, manage business-related expenses, and keep  financial affairs organized. The account is intended for their financial needs and business support.
+            </p>
+
+            <p>
+              This demo includes account information,
+              wallet information, transfers, withdrawals,
+              and customer support features.
+            </p>
+
+            <div className="demo-notice">
+
+              <strong>
+                 Account
+              </strong>
+
+              <p>
+                Crestline Bank provides secure and convenient personal banking services designed to help you manage your finances and support your business needs with ease.
+              </p>
+
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            className="wallet-back-button"
+            onClick={() => setShowAbout(false)}
+          >
+            ← Back to Account
+          </button>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // MENU SCREEN
+  // --------------------------------------------------
+
+  function MenuBox() {
+    return (
+      <div className="messages-page menu-page">
+
+        <div className="messages-header">
+
+          <button
+            type="button"
+            className="back-button"
+            onClick={() => setShowMenu(false)}
+          >
+            ←
+          </button>
+
+          <div className="support-avatar">
+            ☰
+          </div>
+
+          <div className="messages-title">
+
+            <strong>
+              Menu
+            </strong>
+
+            <span>
+              Account Services
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="menu-content">
+
+          <h1>
+            Account Menu
+          </h1>
+
+          <p className="menu-description">
+            Choose an option below.
+          </p>
+
+          <div className="menu-options">
+
+            <button
+              type="button"
+              className="menu-option"
+              onClick={() => {
+                setShowMenu(false)
+                setShowTransfer(true)
+              }}
+            >
+              <span className="menu-option-icon">
+                ↗
+              </span>
+
+              <span>
+                <strong>
+                  Transfer
+                </strong>
+
+                <small>
+                  View your  transfer history
+                </small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="menu-option"
+              onClick={() => {
+                setShowMenu(false)
+                setShowWithdraw(true)
+              }}
+            >
+              <span className="menu-option-icon">
+                $
+              </span>
+
+              <span>
+                <strong>
+                  Withdraw
+                </strong>
+
+                <small>
+                  Withdrawal services
+                </small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="menu-option"
+              onClick={() => {
+                setShowMenu(false)
+                setShowWallet(true)
+              }}
+            >
+              <span className="menu-option-icon">
+                ₿
+              </span>
+
+              <span>
+                <strong>
+                  Bitcoin Wallet
+                </strong>
+
+                <small>
+                  View BTC wallet information
+                </small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="menu-option"
+              onClick={() => {
+                setShowMenu(false)
+                setShowAbout(true)
+              }}
+            >
+              <span className="menu-option-icon">
+                ℹ
+              </span>
+
+              <span>
+                <strong>
+                  About
+                </strong>
+
+                <small>
+                  Learn about Crestline Bank
+                </small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="menu-option"
+              onClick={() => {
+                setShowMenu(false)
+                setShowSupport(true)
+                loadMessages()
+              }}
+            >
+              <span className="menu-option-icon">
+                💬
+              </span>
+
+              <span>
+                <strong>
+                  Customer Support
+                </strong>
+
+                <small>
+                  Contact customer support
+                </small>
+              </span>
+            </button>
+
+          </div>
 
         </div>
 
@@ -968,7 +1382,7 @@ function App() {
             </span>
 
             <span>
-            Crestline Bank
+              Crestline Bank
             </span>
 
           </div>
@@ -1048,8 +1462,16 @@ function App() {
   }
 
   // --------------------------------------------------
-  // WALLET PAGE
+  // INDIVIDUAL PAGES
   // --------------------------------------------------
+
+  if (showMenu) {
+    return (
+      <div className="dashboard">
+        {MenuBox()}
+      </div>
+    )
+  }
 
   if (showWallet) {
     return (
@@ -1059,10 +1481,6 @@ function App() {
     )
   }
 
-  // --------------------------------------------------
-  // WITHDRAW PAGE
-  // --------------------------------------------------
-
   if (showWithdraw) {
     return (
       <div className="dashboard">
@@ -1071,9 +1489,21 @@ function App() {
     )
   }
 
-  // --------------------------------------------------
-  // SUPPORT PAGE
-  // --------------------------------------------------
+  if (showTransfer) {
+    return (
+      <div className="dashboard">
+        {TransferBox()}
+      </div>
+    )
+  }
+
+  if (showAbout) {
+    return (
+      <div className="dashboard">
+        {AboutBox()}
+      </div>
+    )
+  }
 
   if (showSupport) {
     return (
@@ -1084,7 +1514,7 @@ function App() {
   }
 
   // --------------------------------------------------
-  // DASHBOARD
+  // USER NAME
   // --------------------------------------------------
 
   const displayName =
@@ -1092,16 +1522,19 @@ function App() {
     session.user.email?.split('@')[0] ||
     'Customer'
 
+  // --------------------------------------------------
+  // MAIN DASHBOARD
+  // --------------------------------------------------
+
   return (
     <div className="dashboard">
 
       <header className="dashboard-header">
 
-        <div>
+        <div className="brand-area">
 
           <div className="brand">
-            ◆Crestline Bank
-
+            ◆ Crestline Bank
           </div>
 
           <span>
@@ -1111,8 +1544,8 @@ function App() {
         </div>
 
         <button
-          className="logout-button"
           type="button"
+          className="logout-button"
           onClick={handleLogout}
         >
           Log Out
@@ -1122,8 +1555,21 @@ function App() {
 
       <main className="dashboard-content">
 
+        {/* MENU BUTTON */}
+
+        <button
+          type="button"
+          className="menu-button"
+          aria-label="Open menu"
+          onClick={() => setShowMenu(true)}
+        >
+          ☰
+        </button>
+
+        {/* WELCOME */}
+
         <h1>
-          Good to see you, {displayName}
+          Welcome back, {displayName}
         </h1>
 
         <p className="welcome-text">
@@ -1139,14 +1585,16 @@ function App() {
           </p>
 
           <h2>
-            $25,000.00
+            $80,000.00
           </h2>
 
           <span>
-             balance
+             Balance
           </span>
 
         </section>
+
+        {/* DASHBOARD FEATURES */}
 
         <div className="dashboard-grid">
 
@@ -1164,11 +1612,11 @@ function App() {
 
             <button
               type="button"
+              className="card-button"
               onClick={() => {
                 setShowSupport(true)
                 loadMessages()
               }}
-              className="card-button"
             >
               Messages
             </button>
@@ -1184,15 +1632,37 @@ function App() {
             </h3>
 
             <p>
-              View your BTC wallet address.
+              View your  BTC wallet information.
             </p>
 
             <button
               type="button"
-              onClick={() => setShowWallet(true)}
               className="card-button"
+              onClick={() => setShowWallet(true)}
             >
               Open Wallet
+            </button>
+
+          </div>
+
+          {/* TRANSFER */}
+
+          <div className="feature-card">
+
+            <h3>
+              ↗ Transfer
+            </h3>
+
+            <p>
+              View your previous  transfer.
+            </p>
+
+            <button
+              type="button"
+              className="card-button"
+              onClick={() => setShowTransfer(true)}
+            >
+              Transfer
             </button>
 
           </div>
@@ -1206,13 +1676,13 @@ function App() {
             </h3>
 
             <p>
-              Withdraw funds from your account.
+              Withdrawal services.
             </p>
 
             <button
               type="button"
-              onClick={() => setShowWithdraw(true)}
               className="card-button"
+              onClick={() => setShowWithdraw(true)}
             >
               Withdraw
             </button>
@@ -1221,16 +1691,16 @@ function App() {
 
         </div>
 
+        {/* DEMO NOTICE */}
+
         <div className="demo-notice">
 
           <strong>
-            Crestline Bank
+            Crestline Bank D
           </strong>
 
           <p>
-            This is a  banking interface.
-            financial transactions
-            are processed.
+            Crestline Bank provides secure and convenient personal banking services designed to help you manage your finances and support your business needs with ease.
           </p>
 
         </div>

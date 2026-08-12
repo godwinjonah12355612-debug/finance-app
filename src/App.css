@@ -697,3 +697,47 @@ textarea {
   font-weight: 700;
   line-height: 1.6;
 }
+
+.balance-card .balance-label,
+.balance-card .balance-amount,
+.balance-card .balance-subtext {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.balance-card .balance-amount {
+  font-size: 42px;
+  line-height: 1.1;
+  margin: 8px 0;
+}
+
+.balance-card .balance-label {
+  font-size: 18px;
+  margin: 0;
+}
+
+.balance-card .balance-subtext {
+  font-size: 16px;
+}
+
+.dashboard-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 42px;
+  padding: 0;
+  margin: 0 0 18px 0;
+  border: 1px solid #d9dee8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.menu-option,
+.card-button,
+.logout-button {
+  border-radius: 8px;
+}
