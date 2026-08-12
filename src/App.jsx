@@ -7,6 +7,12 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   // --------------------------------------------------
+  // PROFILE
+  // --------------------------------------------------
+
+  const [profileName, setProfileName] = useState('')
+
+  // --------------------------------------------------
   // AUTH
   // --------------------------------------------------
 
@@ -87,6 +93,48 @@ function App() {
       subscription.unsubscribe()
     }
   }, [])
+
+  // --------------------------------------------------
+  // LOAD PROFILE NAME
+  // --------------------------------------------------
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadProfile() {
+      if (!session?.user?.id) {
+        setProfileName('')
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', session.user.id)
+        .maybeSingle()
+
+      if (!mounted) return
+
+      if (error) {
+        console.error('Profile loading error:', error)
+        setProfileName('')
+        return
+      }
+
+      const storedName =
+        typeof data?.display_name === 'string'
+          ? data.display_name.trim()
+          : ''
+
+      setProfileName(storedName)
+    }
+
+    loadProfile()
+
+    return () => {
+      mounted = false
+    }
+  }, [session?.user?.id])
 
   // --------------------------------------------------
   // CHECK ACCOUNT APPROVAL
@@ -241,6 +289,7 @@ function App() {
     setAuthLoading(true)
 
     const cleanEmail = email.trim()
+    const cleanName = fullName.trim()
 
     const {
       data,
@@ -250,7 +299,7 @@ function App() {
       password,
       options: {
         data: {
-          full_name: fullName.trim(),
+          full_name: cleanName,
         },
       },
     })
@@ -295,6 +344,7 @@ function App() {
 
     setSession(null)
     setApproved(false)
+    setProfileName('')
 
     setShowSupport(false)
     setShowWallet(false)
@@ -355,7 +405,7 @@ function App() {
           user_id: userId,
           message,
           customer_name:
-            session.user.user_metadata?.full_name ||
+            profileName ||
             session.user.email ||
             'Customer',
         },
@@ -686,13 +736,13 @@ function App() {
           <div className="wallet-info">
 
             <strong>
-               Information
+              Information
             </strong>
 
             <p>
               Address Information
 
-Your registered address and contact details associated with your account.
+              Your registered address and contact details associated with your account.
             </p>
 
           </div>
@@ -739,7 +789,7 @@ Your registered address and contact details associated with your account.
           </button>
 
           <div className="support-avatar">
-            ↗
+            ↗️
           </div>
 
           <div className="messages-title">
@@ -749,7 +799,7 @@ Your registered address and contact details associated with your account.
             </strong>
 
             <span>
-               Transaction History
+              Transaction History
             </span>
 
           </div>
@@ -763,11 +813,11 @@ Your registered address and contact details associated with your account.
           </div>
 
           <h1>
-            Last  Transfer
+            Last Transfer
           </h1>
 
           <p className="transfer-description">
-            Your most recent  transaction
+            Your most recent transaction
             record.
           </p>
 
@@ -826,13 +876,15 @@ Your registered address and contact details associated with your account.
           </div>
 
           <div className="demo-notice">
+
             <strong>
               Transaction
             </strong>
 
             <p>
-             Crestline Bank helps you manage your money and support your business with simple, secure banking services.
+              Crestline Bank helps you manage your money and support your business with simple, secure banking services.
             </p>
+
           </div>
 
           <button
@@ -896,7 +948,7 @@ Your registered address and contact details associated with your account.
           </h1>
 
           <p>
-            This  service is currently unavailable
+            This service is currently unavailable
             because the site is undergoing maintenance.
           </p>
 
@@ -992,7 +1044,7 @@ Your registered address and contact details associated with your account.
             </h3>
 
             <p>
-               Crestline Bank was created to help  users, manage  finances and support their business activities. It give   convenient and secure way to handle  personal funds, manage business-related expenses, and keep  financial affairs organized. The account is intended for their financial needs and business support.
+              Crestline Bank was created to help users, manage finances and support their business activities. It give convenient and secure way to handle personal funds, manage business-related expenses, and keep financial affairs organized. The account is intended for their financial needs and business support.
             </p>
 
             <p>
@@ -1004,7 +1056,7 @@ Your registered address and contact details associated with your account.
             <div className="demo-notice">
 
               <strong>
-                 Account
+                Account
               </strong>
 
               <p>
@@ -1086,16 +1138,16 @@ Your registered address and contact details associated with your account.
               }}
             >
               <span className="menu-option-icon">
-                ↗
+                ↗️
               </span>
 
-              <span>
+              <span className="menu-option-text">
                 <strong>
                   Transfer
                 </strong>
 
                 <small>
-                  View your  transfer history
+                  View your transfer history
                 </small>
               </span>
             </button>
@@ -1112,7 +1164,7 @@ Your registered address and contact details associated with your account.
                 $
               </span>
 
-              <span>
+              <span className="menu-option-text">
                 <strong>
                   Withdraw
                 </strong>
@@ -1135,7 +1187,7 @@ Your registered address and contact details associated with your account.
                 ₿
               </span>
 
-              <span>
+              <span className="menu-option-text">
                 <strong>
                   Bitcoin Wallet
                 </strong>
@@ -1158,7 +1210,7 @@ Your registered address and contact details associated with your account.
                 ℹ
               </span>
 
-              <span>
+              <span className="menu-option-text">
                 <strong>
                   About
                 </strong>
@@ -1182,7 +1234,7 @@ Your registered address and contact details associated with your account.
                 💬
               </span>
 
-              <span>
+              <span className="menu-option-text">
                 <strong>
                   Customer Support
                 </strong>
@@ -1518,7 +1570,7 @@ Your registered address and contact details associated with your account.
   // --------------------------------------------------
 
   const displayName =
-    session.user.user_metadata?.full_name ||
+    profileName ||
     session.user.email?.split('@')[0] ||
     'Customer'
 
@@ -1589,7 +1641,7 @@ Your registered address and contact details associated with your account.
           </h2>
 
           <span>
-             Balance
+            Balance
           </span>
 
         </section>
@@ -1632,7 +1684,7 @@ Your registered address and contact details associated with your account.
             </h3>
 
             <p>
-              View your  BTC wallet information.
+              View your BTC wallet information.
             </p>
 
             <button
@@ -1650,11 +1702,11 @@ Your registered address and contact details associated with your account.
           <div className="feature-card">
 
             <h3>
-              ↗ Transfer
+              ↗️ Transfer
             </h3>
 
             <p>
-              View your previous  transfer.
+              View your previous transfer.
             </p>
 
             <button
