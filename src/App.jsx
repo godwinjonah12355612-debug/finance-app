@@ -6,16 +6,13 @@ function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // --------------------------------------------------
   // PROFILE
-  // --------------------------------------------------
-
   const [profileName, setProfileName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [balance, setBalance] = useState(0)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
-  // --------------------------------------------------
   // AUTH
-  // --------------------------------------------------
-
   const [authMode, setAuthMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,41 +21,103 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false)
   const [authMessage, setAuthMessage] = useState('')
 
-  // --------------------------------------------------
   // APPROVAL
-  // --------------------------------------------------
-
   const [approved, setApproved] = useState(false)
   const [checkingApproval, setCheckingApproval] = useState(false)
 
-  // --------------------------------------------------
-  // CUSTOMER SUPPORT
-  // --------------------------------------------------
+  // PAGES
+  const [activePage, setActivePage] = useState('dashboard')
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
 
-  const [showSupport, setShowSupport] = useState(false)
+  // SUPPORT
   const [supportMessage, setSupportMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
   const [messages, setMessages] = useState([])
 
-  // --------------------------------------------------
-  // PAGES
-  // --------------------------------------------------
-
-  const [showWallet, setShowWallet] = useState(false)
-  const [showWithdraw, setShowWithdraw] = useState(false)
-  const [showTransfer, setShowTransfer] = useState(false)
-  const [showAbout, setShowAbout] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
-
-  // --------------------------------------------------
-  // DEMO BTC WALLET ADDRESS
-  // --------------------------------------------------
-
+  // DEMO WALLET
   const walletAddress =
     'bc1qwx90w9s588gyev4qrw45fe57gq5pwrhctte8f2'
 
   // --------------------------------------------------
-  // CHECK LOGIN SESSION
+  // ACCOUNTS
+  // --------------------------------------------------
+
+  const accounts = [
+    {
+      name: 'Checking Account',
+      number: '•••• 4821',
+      balance: Number(balance),
+      icon: '▣',
+    },
+    {
+      name: 'Savings Account',
+      number: '•••• 7534',
+      balance: 12890.50,
+      icon: '🐷',
+    },
+    {
+      name: 'Business Account',
+      number: '•••• 9912',
+      balance: 8200.75,
+      icon: '💼',
+    },
+  ]
+
+  // --------------------------------------------------
+  // DEMO TRANSACTIONS
+  // --------------------------------------------------
+
+  const transactions = [
+    {
+      title: 'Amazon Shopping',
+      date: 'May 12, 2026 • 10:24 AM',
+      amount: '-$84.20',
+      type: 'out',
+      icon: 'a',
+    },
+    {
+      title: 'Salary Deposit',
+      date: 'May 10, 2026 • 09:00 AM',
+      amount: '+$3,500.00',
+      type: 'in',
+      icon: '↓',
+    },
+    {
+      title: 'Electricity Bill',
+      date: 'May 8, 2026 • 04:45 PM',
+      amount: '-$120.00',
+      type: 'out',
+      icon: 'ϟ',
+    },
+    {
+      title: 'Transfer to Savings',
+      date: 'May 7, 2026 • 11:15 AM',
+      amount: '-$500.00',
+      type: 'out',
+      icon: '↔️',
+    },
+    {
+      title: 'Netflix Subscription',
+      date: 'May 5, 2026 • 08:30 PM',
+      amount: '-$15.99',
+      type: 'out',
+      icon: 'N',
+    },
+  ]
+
+  // --------------------------------------------------
+  // FORMAT BALANCE
+  // --------------------------------------------------
+
+  function formatBalance(value) {
+    return Number(value || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  }
+
+  // --------------------------------------------------
+  // SESSION
   // --------------------------------------------------
 
   useEffect(() => {
@@ -95,7 +154,7 @@ function App() {
   }, [])
 
   // --------------------------------------------------
-  // LOAD PROFILE NAME
+  // LOAD PROFILE + BALANCE
   // --------------------------------------------------
 
   useEffect(() => {
@@ -104,12 +163,14 @@ function App() {
     async function loadProfile() {
       if (!session?.user?.id) {
         setProfileName('')
+        setAvatarUrl('')
+        setBalance(0)
         return
       }
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name')
+        .select('display_name, avatar_url, balance')
         .eq('id', session.user.id)
         .maybeSingle()
 
@@ -117,16 +178,26 @@ function App() {
 
       if (error) {
         console.error('Profile loading error:', error)
-        setProfileName('')
         return
       }
 
-      const storedName =
+      setProfileName(
         typeof data?.display_name === 'string'
           ? data.display_name.trim()
           : ''
+      )
 
-      setProfileName(storedName)
+      setAvatarUrl(
+        typeof data?.avatar_url === 'string'
+          ? data.avatar_url
+          : ''
+      )
+
+      setBalance(
+        typeof data?.balance === 'number'
+          ? data.balance
+          : Number(data?.balance || 0)
+      )
     }
 
     loadProfile()
@@ -137,7 +208,7 @@ function App() {
   }, [session?.user?.id])
 
   // --------------------------------------------------
-  // CHECK ACCOUNT APPROVAL
+  // APPROVAL
   // --------------------------------------------------
 
   useEffect(() => {
@@ -177,13 +248,89 @@ function App() {
   }, [session?.user?.id])
 
   // --------------------------------------------------
-  // LOAD SUPPORT MESSAGES
+  // PROFILE PICTURE
+  // --------------------------------------------------
+
+  async function handleAvatarUpload(event) {
+    const file = event.target.files?.[0]
+
+    if (!file || !session?.user?.id) return
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Please choose an image smaller than 5MB.')
+      return
+    }
+
+    setUploadingAvatar(true)
+
+    try {
+      const userId = session.user.id
+
+      const extension =
+        file.name.split('.').pop() || 'jpg'
+
+      const filePath =
+        `${userId}/avatar-${Date.now()}.${extension}`
+
+      const { error: uploadError } =
+        await supabase.storage
+          .from('avatars')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type,
+          })
+
+      if (uploadError) {
+        throw uploadError
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      const { error: profileError } =
+        await supabase
+          .from('profiles')
+          .update({
+            avatar_url: publicUrl,
+          })
+          .eq('id', userId)
+
+      if (profileError) {
+        throw profileError
+      }
+
+      setAvatarUrl(publicUrl)
+      setShowProfileMenu(false)
+
+      alert('Profile picture updated successfully!')
+    } catch (error) {
+      console.error('Avatar upload error:', error)
+
+      alert(
+        error.message ||
+          'Unable to upload your profile picture.'
+      )
+    } finally {
+      setUploadingAvatar(false)
+      event.target.value = ''
+    }
+  }
+
+  // --------------------------------------------------
+  // SUPPORT MESSAGES
   // --------------------------------------------------
 
   async function loadMessages() {
-    if (!session?.user?.id) {
-      return
-    }
+    if (!session?.user?.id) return
 
     const { data, error } = await supabase
       .from('support_messages')
@@ -202,7 +349,10 @@ function App() {
   }
 
   useEffect(() => {
-    if (!session?.user?.id || !approved) {
+    if (
+      !session?.user?.id ||
+      !approved
+    ) {
       setMessages([])
       return
     }
@@ -213,170 +363,13 @@ function App() {
       loadMessages()
     }, 3000)
 
-    return () => {
-      clearInterval(interval)
-    }
+    return () => clearInterval(interval)
   }, [session?.user?.id, approved])
-
-  // --------------------------------------------------
-  // LOGIN
-  // --------------------------------------------------
-
-  async function handleLogin(e) {
-    e.preventDefault()
-
-    setAuthMessage('')
-    setAuthLoading(true)
-
-    const cleanEmail = email.trim()
-
-    const { data, error } =
-      await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      })
-
-    setAuthLoading(false)
-
-    if (error) {
-      console.error('Login error:', error)
-
-      setAuthMessage(
-        error.message ||
-          'Unable to sign in. Please check your details.'
-      )
-
-      return
-    }
-
-    setSession(data.session)
-
-    setEmail('')
-    setPassword('')
-  }
-
-  // --------------------------------------------------
-  // SIGN UP
-  // --------------------------------------------------
-
-  async function handleSignUp(e) {
-    e.preventDefault()
-
-    setAuthMessage('')
-
-    if (!fullName.trim()) {
-      setAuthMessage('Please enter your name.')
-      return
-    }
-
-    if (!email.trim()) {
-      setAuthMessage('Please enter your email.')
-      return
-    }
-
-    if (password.length < 6) {
-      setAuthMessage(
-        'Password must be at least 6 characters.'
-      )
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setAuthMessage('Passwords do not match.')
-      return
-    }
-
-    setAuthLoading(true)
-
-    const cleanEmail = email.trim()
-    const cleanName = fullName.trim()
-
-    const {
-      data,
-      error,
-    } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password,
-      options: {
-        data: {
-          full_name: cleanName,
-        },
-      },
-    })
-
-    setAuthLoading(false)
-
-    if (error) {
-      console.error('Sign up error:', error)
-
-      setAuthMessage(
-        error.message ||
-          'Unable to create your account.'
-      )
-
-      return
-    }
-
-    if (data.session) {
-      setSession(data.session)
-
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
-      setFullName('')
-    } else {
-      setAuthMessage(
-        'Account created. Please check your email to confirm your account, then sign in.'
-      )
-
-      setAuthMode('login')
-      setPassword('')
-      setConfirmPassword('')
-    }
-  }
-
-  // --------------------------------------------------
-  // LOG OUT
-  // --------------------------------------------------
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-
-    setSession(null)
-    setApproved(false)
-    setProfileName('')
-
-    setShowSupport(false)
-    setShowWallet(false)
-    setShowWithdraw(false)
-    setShowTransfer(false)
-    setShowAbout(false)
-    setShowMenu(false)
-
-    setMessages([])
-    setSupportMessage('')
-
-    setEmail('')
-    setPassword('')
-    setConfirmPassword('')
-    setFullName('')
-  }
-
-  // --------------------------------------------------
-  // SEND SUPPORT MESSAGE
-  // --------------------------------------------------
 
   async function handleSendMessage() {
     const message = supportMessage.trim()
 
-    if (!message) {
-      return
-    }
-
-    if (!session?.user?.id) {
-      alert('Please sign in first.')
-      return
-    }
+    if (!message || !session?.user?.id) return
 
     setSendingMessage(true)
 
@@ -414,10 +407,7 @@ function App() {
       .single()
 
     if (error) {
-      console.error(
-        'Supabase message error:',
-        error
-      )
+      console.error('Message error:', error)
 
       setMessages((previous) =>
         previous.filter(
@@ -429,10 +419,7 @@ function App() {
       setSupportMessage(message)
       setSendingMessage(false)
 
-      alert(
-        'Unable to send the message. Please try again.'
-      )
-
+      alert('Unable to send your message.')
       return
     }
 
@@ -444,11 +431,8 @@ function App() {
       )
     )
 
-    // Telegram notification
     try {
-      const {
-        error: telegramError,
-      } = await supabase.functions.invoke(
+      await supabase.functions.invoke(
         'send-telegram',
         {
           body: {
@@ -460,17 +444,10 @@ function App() {
           },
         }
       )
-
-      if (telegramError) {
-        console.error(
-          'Telegram notification error:',
-          telegramError
-        )
-      }
-    } catch (telegramError) {
+    } catch (error) {
       console.error(
-        'Telegram function error:',
-        telegramError
+        'Telegram notification error:',
+        error
       )
     }
 
@@ -478,779 +455,131 @@ function App() {
   }
 
   // --------------------------------------------------
-  // SUPPORT SCREEN
+  // LOGIN
   // --------------------------------------------------
 
-  function SupportBox() {
-    return (
-      <div className="messages-page">
+  async function handleLogin(e) {
+    e.preventDefault()
 
-        <div className="messages-header">
+    setAuthMessage('')
+    setAuthLoading(true)
 
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => setShowSupport(false)}
-          >
-            ←
-          </button>
+    const cleanEmail = email.trim()
 
-          <div className="support-avatar">
-            C
-          </div>
+    const { data, error } =
+      await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      })
 
-          <div className="messages-title">
+    setAuthLoading(false)
 
-            <strong>
-              Customer Support
-            </strong>
-
-            <span>
-              ● Online
-            </span>
-
-          </div>
-
-        </div>
-
-        <div className="messages-conversation">
-
-          {messages.length === 0 && (
-            <div className="conversation-intro">
-
-              <div className="intro-icon">
-                💬
-              </div>
-
-              <h2>
-                Customer Support
-              </h2>
-
-              <p>
-                How can we help you?
-              </p>
-
-            </div>
-          )}
-
-          {messages.map((item) => (
-            <div
-              className="conversation-group"
-              key={item.id}
-            >
-
-              {item.message && (
-                <div className="message-row customer-row">
-
-                  <div className="message-content">
-
-                    <div className="message-bubble customer-bubble">
-                      {item.message}
-                    </div>
-
-                    <div className="message-time">
-                      {item.temporary
-                        ? 'Sending...'
-                        : 'Now'}
-                    </div>
-
-                  </div>
-
-                </div>
-              )}
-
-              {item.reply_text && (
-                <div className="message-row support-row">
-
-                  <div className="support-message-content">
-
-                    <div className="message-bubble support-bubble">
-
-                      <strong>
-                        Customer Support
-                      </strong>
-
-                      <div>
-                        {item.reply_text}
-                      </div>
-
-                    </div>
-
-                    <div className="message-time support-time">
-                      Now
-                    </div>
-
-                  </div>
-
-                </div>
-              )}
-
-            </div>
-          ))}
-
-          <div className="bottom-space" />
-
-        </div>
-
-        <div className="message-input-area">
-
-          <div className="message-input-wrapper">
-
-            <textarea
-              value={supportMessage}
-              onChange={(e) =>
-                setSupportMessage(e.target.value)
-              }
-              placeholder="Type a message..."
-              rows={1}
-              disabled={sendingMessage}
-              onKeyDown={(e) => {
-
-                if (
-                  e.key === 'Enter' &&
-                  !e.shiftKey
-                ) {
-                  e.preventDefault()
-
-                  if (
-                    !sendingMessage &&
-                    supportMessage.trim()
-                  ) {
-                    handleSendMessage()
-                  }
-                }
-
-              }}
-            />
-
-            <button
-              type="button"
-              className="send-message-button"
-              disabled={
-                sendingMessage ||
-                !supportMessage.trim()
-              }
-              onClick={handleSendMessage}
-            >
-              {sendingMessage ? '...' : '➤'}
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-    )
-  }
-
-  // --------------------------------------------------
-  // WALLET SCREEN
-  // --------------------------------------------------
-
-  function WalletBox() {
-
-    async function copyWalletAddress() {
-      try {
-        await navigator.clipboard.writeText(
-          walletAddress
-        )
-
-        alert('Wallet address copied!')
-      } catch (error) {
-        console.error(
-          'Copy failed:',
-          error
-        )
-
-        alert(
-          'Unable to copy automatically. Please copy the address manually.'
-        )
-      }
+    if (error) {
+      setAuthMessage(error.message)
+      return
     }
 
-    return (
-      <div className="messages-page wallet-page">
-
-        <div className="messages-header">
-
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => setShowWallet(false)}
-          >
-            ←
-          </button>
-
-          <div className="support-avatar">
-            ₿
-          </div>
-
-          <div className="messages-title">
-
-            <strong>
-              Bitcoin Wallet
-            </strong>
-
-            <span>
-              BTC
-            </span>
-
-          </div>
-
-        </div>
-
-        <div className="wallet-content">
-
-          <div className="wallet-icon">
-            ₿
-          </div>
-
-          <h1>
-            Your Bitcoin Wallet
-          </h1>
-
-          <p className="wallet-description">
-            This is your Bitcoin wallet address.
-          </p>
-
-          <div className="wallet-address-card">
-
-            <p className="wallet-address-label">
-              BTC Wallet Address
-            </p>
-
-            <div className="wallet-address">
-              {walletAddress}
-            </div>
-
-            <button
-              type="button"
-              className="card-button copy-wallet-button"
-              onClick={copyWalletAddress}
-            >
-              📋 Copy Address
-            </button>
-
-          </div>
-
-          <div className="wallet-info">
-
-            <strong>
-              Information
-            </strong>
-
-            <p>
-              Address Information
-
-              Your registered address and contact details associated with your account.
-            </p>
-
-          </div>
-
-          <a
-            className="card-button changelly-button"
-            href="https://changelly.com/buy/btc"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            ₿ Buy Bitcoin with Changelly
-          </a>
-
-          <button
-            type="button"
-            className="wallet-back-button"
-            onClick={() => setShowWallet(false)}
-          >
-            ← Back to Account
-          </button>
-
-        </div>
-
-      </div>
-    )
+    setSession(data.session)
+    setEmail('')
+    setPassword('')
   }
 
   // --------------------------------------------------
-  // TRANSFER SCREEN
+  // SIGN UP
   // --------------------------------------------------
 
-  function TransferBox() {
-    return (
-      <div className="messages-page transfer-page">
+  async function handleSignUp(e) {
+    e.preventDefault()
 
-        <div className="messages-header">
+    setAuthMessage('')
 
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => setShowTransfer(false)}
-          >
-            ←
-          </button>
+    if (!fullName.trim()) {
+      setAuthMessage('Please enter your name.')
+      return
+    }
 
-          <div className="support-avatar">
-            ↗️
-          </div>
+    if (!email.trim()) {
+      setAuthMessage('Please enter your email.')
+      return
+    }
 
-          <div className="messages-title">
+    if (password.length < 6) {
+      setAuthMessage(
+        'Password must be at least 6 characters.'
+      )
+      return
+    }
 
-            <strong>
-              Transfer
-            </strong>
+    if (password !== confirmPassword) {
+      setAuthMessage('Passwords do not match.')
+      return
+    }
 
-            <span>
-              Transaction History
-            </span>
+    setAuthLoading(true)
 
-          </div>
+    const { data, error } =
+      await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+          },
+        },
+      })
 
-        </div>
+    setAuthLoading(false)
 
-        <div className="transfer-content">
+    if (error) {
+      setAuthMessage(error.message)
+      return
+    }
 
-          <div className="transfer-icon">
-            ✓
-          </div>
+    if (data.session) {
+      setSession(data.session)
+      setEmail('')
+      setPassword('')
+      setConfirmPassword('')
+      setFullName('')
+    } else {
+      setAuthMessage(
+        'Account created. Please check your email to confirm your account.'
+      )
 
-          <h1>
-            Last Transfer
-          </h1>
-
-          <p className="transfer-description">
-            Your most recent transaction
-            record.
-          </p>
-
-          <div className="transaction-card">
-
-            <div className="transaction-row">
-              <span>
-                Recipient
-              </span>
-
-              <strong>
-                Alex JOhn
-              </strong>
-            </div>
-
-            <div className="transaction-row">
-              <span>
-                Amount
-              </span>
-
-              <strong>
-                $2,500.00
-              </strong>
-            </div>
-
-            <div className="transaction-row">
-              <span>
-                Date
-              </span>
-
-              <strong>
-                July 12, 2026
-              </strong>
-            </div>
-
-            <div className="transaction-row">
-              <span>
-                Type
-              </span>
-
-              <strong>
-                Demo Bank Transfer
-              </strong>
-            </div>
-
-            <div className="transaction-row">
-              <span>
-                Status
-              </span>
-
-              <strong className="transaction-status">
-                Completed
-              </strong>
-            </div>
-
-          </div>
-
-          <div className="demo-notice">
-
-            <strong>
-              Transaction
-            </strong>
-
-            <p>
-              Crestline Bank helps you manage your money and support your business with simple, secure banking services.
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            className="wallet-back-button"
-            onClick={() => setShowTransfer(false)}
-          >
-            ← Back to Account
-          </button>
-
-        </div>
-
-      </div>
-    )
+      setAuthMode('login')
+      setPassword('')
+      setConfirmPassword('')
+    }
   }
 
   // --------------------------------------------------
-  // WITHDRAW SCREEN
+  // LOGOUT
   // --------------------------------------------------
 
-  function WithdrawBox() {
-    return (
-      <div className="messages-page">
+  async function handleLogout() {
+    await supabase.auth.signOut()
 
-        <div className="messages-header">
-
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => setShowWithdraw(false)}
-          >
-            ←
-          </button>
-
-          <div className="support-avatar">
-            $
-          </div>
-
-          <div className="messages-title">
-
-            <strong>
-              Withdraw
-            </strong>
-
-            <span>
-              Account Services
-            </span>
-
-          </div>
-
-        </div>
-
-        <div className="withdraw-content">
-
-          <div className="withdraw-icon">
-            🔧
-          </div>
-
-          <h1>
-            Withdraw Unavailable
-          </h1>
-
-          <p>
-            This service is currently unavailable
-            because the site is undergoing maintenance.
-          </p>
-
-          <div className="maintenance-box">
-
-            <strong>
-              Site Maintenance
-            </strong>
-
-            <p>
-              Please try again later or contact
-              Customer Support if you need assistance.
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            className="card-button"
-            onClick={() => {
-              setShowWithdraw(false)
-              setShowSupport(true)
-              loadMessages()
-            }}
-          >
-            💬 Contact Customer Support
-          </button>
-
-          <button
-            type="button"
-            className="wallet-back-button"
-            onClick={() => setShowWithdraw(false)}
-          >
-            ← Back to Account
-          </button>
-
-        </div>
-
-      </div>
-    )
+    setSession(null)
+    setApproved(false)
+    setProfileName('')
+    setAvatarUrl('')
+    setBalance(0)
+    setMessages([])
+    setActivePage('dashboard')
+    setShowProfileMenu(false)
   }
 
   // --------------------------------------------------
-  // ABOUT SCREEN
+  // NAVIGATION
   // --------------------------------------------------
 
-  function AboutBox() {
-    return (
-      <div className="messages-page">
+  function navigate(page) {
+    setActivePage(page)
+    setShowProfileMenu(false)
 
-        <div className="messages-header">
-
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => setShowAbout(false)}
-          >
-            ←
-          </button>
-
-          <div className="support-avatar">
-            ◆
-          </div>
-
-          <div className="messages-title">
-
-            <strong>
-              About Crestline Bank
-            </strong>
-
-            <span>
-              Personal Banking
-            </span>
-
-          </div>
-
-        </div>
-
-        <div className="about-content">
-
-          <div className="about-card">
-
-            <div className="about-logo">
-              ◆
-            </div>
-
-            <h1>
-              Crestline Bank
-            </h1>
-
-            <h3>
-              Crestline Account
-            </h3>
-
-            <p>
-              Crestline Bank was created to help users, manage finances and support their business activities. It give convenient and secure way to handle personal funds, manage business-related expenses, and keep financial affairs organized. The account is intended for their financial needs and business support.
-            </p>
-
-            <p>
-              This demo includes account information,
-              wallet information, transfers, withdrawals,
-              and customer support features.
-            </p>
-
-            <div className="demo-notice">
-
-              <strong>
-                Account
-              </strong>
-
-              <p>
-                Crestline Bank provides secure and convenient personal banking services designed to help you manage your finances and support your business needs with ease.
-              </p>
-
-            </div>
-
-          </div>
-
-          <button
-            type="button"
-            className="wallet-back-button"
-            onClick={() => setShowAbout(false)}
-          >
-            ← Back to Account
-          </button>
-
-        </div>
-
-      </div>
-    )
-  }
-
-  // --------------------------------------------------
-  // MENU SCREEN
-  // --------------------------------------------------
-
-  function MenuBox() {
-    return (
-      <div className="messages-page menu-page">
-
-        <div className="messages-header">
-
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => setShowMenu(false)}
-          >
-            ←
-          </button>
-
-          <div className="support-avatar">
-            ☰
-          </div>
-
-          <div className="messages-title">
-
-            <strong>
-              Menu
-            </strong>
-
-            <span>
-              Account Services
-            </span>
-
-          </div>
-
-        </div>
-
-        <div className="menu-content">
-
-          <h1>
-            Account Menu
-          </h1>
-
-          <p className="menu-description">
-            Choose an option below.
-          </p>
-
-          <div className="menu-options">
-
-            <button
-              type="button"
-              className="menu-option"
-              onClick={() => {
-                setShowMenu(false)
-                setShowTransfer(true)
-              }}
-            >
-              <span className="menu-option-icon">
-                ↗️
-              </span>
-
-              <span className="menu-option-text">
-                <strong>
-                  Transfer
-                </strong>
-
-                <small>
-                  View your transfer history
-                </small>
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className="menu-option"
-              onClick={() => {
-                setShowMenu(false)
-                setShowWithdraw(true)
-              }}
-            >
-              <span className="menu-option-icon">
-                $
-              </span>
-
-              <span className="menu-option-text">
-                <strong>
-                  Withdraw
-                </strong>
-
-                <small>
-                  Withdrawal services
-                </small>
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className="menu-option"
-              onClick={() => {
-                setShowMenu(false)
-                setShowWallet(true)
-              }}
-            >
-              <span className="menu-option-icon">
-                ₿
-              </span>
-
-              <span className="menu-option-text">
-                <strong>
-                  Bitcoin Wallet
-                </strong>
-
-                <small>
-                  View BTC wallet information
-                </small>
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className="menu-option"
-              onClick={() => {
-                setShowMenu(false)
-                setShowAbout(true)
-              }}
-            >
-              <span className="menu-option-icon">
-                ℹ
-              </span>
-
-              <span className="menu-option-text">
-                <strong>
-                  About
-                </strong>
-
-                <small>
-                  Learn about Crestline Bank
-                </small>
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className="menu-option"
-              onClick={() => {
-                setShowMenu(false)
-                setShowSupport(true)
-                loadMessages()
-              }}
-            >
-              <span className="menu-option-icon">
-                💬
-              </span>
-
-              <span className="menu-option-text">
-                <strong>
-                  Customer Support
-                </strong>
-
-                <small>
-                  Contact customer support
-                </small>
-              </span>
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-    )
+    if (page === 'support') {
+      loadMessages()
+    }
   }
 
   // --------------------------------------------------
@@ -1260,31 +589,22 @@ function App() {
   if (loading) {
     return (
       <div className="app">
-
         <div className="login-card">
-
-          <h1>
-            Loading...
-          </h1>
-
+          <h1>Loading...</h1>
         </div>
-
       </div>
     )
   }
 
   // --------------------------------------------------
-  // LOGIN / SIGN UP
+  // LOGIN / SIGNUP
   // --------------------------------------------------
 
   if (!session) {
-
-    const isLogin =
-      authMode === 'login'
+    const isLogin = authMode === 'login'
 
     return (
       <div className="app">
-
         <div className="login-card">
 
           <div className="bank-logo">
@@ -1319,9 +639,7 @@ function App() {
 
             {!isLogin && (
               <>
-                <label>
-                  Full Name
-                </label>
+                <label>Full Name</label>
 
                 <input
                   type="text"
@@ -1330,14 +648,11 @@ function App() {
                     setFullName(e.target.value)
                   }
                   placeholder="Enter your name"
-                  autoComplete="name"
                 />
               </>
             )}
 
-            <label>
-              Email
-            </label>
+            <label>Email</label>
 
             <input
               type="email"
@@ -1346,16 +661,9 @@ function App() {
                 setEmail(e.target.value)
               }
               placeholder="Enter your email"
-              autoComplete={
-                isLogin
-                  ? 'email'
-                  : 'new-email'
-              }
             />
 
-            <label>
-              Password
-            </label>
+            <label>Password</label>
 
             <input
               type="password"
@@ -1364,11 +672,6 @@ function App() {
                 setPassword(e.target.value)
               }
               placeholder="Enter password"
-              autoComplete={
-                isLogin
-                  ? 'current-password'
-                  : 'new-password'
-              }
             />
 
             {!isLogin && (
@@ -1386,7 +689,6 @@ function App() {
                     )
                   }
                   placeholder="Confirm password"
-                  autoComplete="new-password"
                 />
               </>
             )}
@@ -1410,7 +712,6 @@ function App() {
             className="auth-switch-button"
             onClick={() => {
               setAuthMessage('')
-
               setAuthMode(
                 isLogin
                   ? 'signup'
@@ -1424,61 +725,43 @@ function App() {
           </button>
 
           <div className="login-footer">
-
             <span>
               🔒 Secure connection
             </span>
 
-            <span>
-              •
-            </span>
+            <span>•</span>
 
             <span>
-              Crestline Bank
+              Crestline Bank 
             </span>
-
           </div>
 
         </div>
-
       </div>
     )
   }
 
   // --------------------------------------------------
-  // CHECKING APPROVAL
+  // APPROVAL
   // --------------------------------------------------
 
   if (checkingApproval) {
-
     return (
       <div className="app">
-
         <div className="login-card">
-
-          <h1>
-            Please wait...
-          </h1>
+          <h1>Please wait...</h1>
 
           <p className="subtitle">
             Checking your account approval.
           </p>
-
         </div>
-
       </div>
     )
   }
 
-  // --------------------------------------------------
-  // WAITING FOR APPROVAL
-  // --------------------------------------------------
-
   if (!approved) {
-
     return (
       <div className="app">
-
         <div className="login-card">
 
           <div className="bank-logo">
@@ -1508,65 +791,12 @@ function App() {
           </button>
 
         </div>
-
       </div>
     )
   }
 
   // --------------------------------------------------
-  // INDIVIDUAL PAGES
-  // --------------------------------------------------
-
-  if (showMenu) {
-    return (
-      <div className="dashboard">
-        {MenuBox()}
-      </div>
-    )
-  }
-
-  if (showWallet) {
-    return (
-      <div className="dashboard">
-        {WalletBox()}
-      </div>
-    )
-  }
-
-  if (showWithdraw) {
-    return (
-      <div className="dashboard">
-        {WithdrawBox()}
-      </div>
-    )
-  }
-
-  if (showTransfer) {
-    return (
-      <div className="dashboard">
-        {TransferBox()}
-      </div>
-    )
-  }
-
-  if (showAbout) {
-    return (
-      <div className="dashboard">
-        {AboutBox()}
-      </div>
-    )
-  }
-
-  if (showSupport) {
-    return (
-      <div className="dashboard">
-        {SupportBox()}
-      </div>
-    )
-  }
-
-  // --------------------------------------------------
-  // USER NAME
+  // DISPLAY NAME
   // --------------------------------------------------
 
   const displayName =
@@ -1575,189 +805,1232 @@ function App() {
     'Customer'
 
   // --------------------------------------------------
-  // MAIN DASHBOARD
+  // PROFILE AVATAR
   // --------------------------------------------------
 
-  return (
-    <div className="dashboard">
+  function Avatar({ size = 'medium' }) {
+    return (
+      <div
+        className={`user-avatar avatar-${size}`}
+      >
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Profile"
+          />
+        ) : (
+          <span>
+            {displayName
+              .charAt(0)
+              .toUpperCase()}
+          </span>
+        )}
+      </div>
+    )
+  }
 
-      <header className="dashboard-header">
+  // --------------------------------------------------
+  // SUPPORT PAGE
+  // --------------------------------------------------
 
-        <div className="brand-area">
+  function SupportPage() {
+    return (
+      <div className="page-content">
 
-          <div className="brand">
-            ◆ Crestline Bank
+        <div className="page-title-row">
+          <div>
+            <h1>Customer Support</h1>
+            <p>
+              We're here to help with your account.
+            </p>
+          </div>
+        </div>
+
+        <div className="support-card">
+
+          <div className="support-top">
+            <div className="support-avatar-large">
+              C
+            </div>
+
+            <div>
+              <strong>
+                Crestline Customer Support
+              </strong>
+
+              <span className="online-status">
+                ● Online
+              </span>
+            </div>
           </div>
 
-          <span>
-            Personal Banking
-          </span>
+          <div className="support-conversation">
+
+            {messages.length === 0 && (
+              <div className="conversation-intro">
+                <div className="intro-icon">
+                  💬
+                </div>
+
+                <h2>
+                  How can we help?
+                </h2>
+
+                <p>
+                  Send us a message and our
+                  support team will respond.
+                </p>
+              </div>
+            )}
+
+            {messages.map((item) => (
+              <div
+                key={item.id}
+                className="conversation-group"
+              >
+
+                {item.message && (
+                  <div className="customer-message">
+                    <div>
+                      {item.message}
+                    </div>
+
+                    <small>
+                      {item.temporary
+                        ? 'Sending...'
+                        : 'You'}
+                    </small>
+                  </div>
+                )}
+
+                {item.reply_text && (
+                  <div className="support-message">
+                    <strong>
+                      Customer Support
+                    </strong>
+
+                    <div>
+                      {item.reply_text}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            ))}
+
+          </div>
+
+          <div className="support-input">
+            <textarea
+              value={supportMessage}
+              onChange={(e) =>
+                setSupportMessage(
+                  e.target.value
+                )
+              }
+              placeholder="Type a message..."
+              rows={2}
+              disabled={sendingMessage}
+              onKeyDown={(e) => {
+                if (
+                  e.key === 'Enter' &&
+                  !e.shiftKey
+                ) {
+                  e.preventDefault()
+
+                  if (
+                    supportMessage.trim() &&
+                    !sendingMessage
+                  ) {
+                    handleSendMessage()
+                  }
+                }
+              }}
+            />
+
+            <button
+              type="button"
+              disabled={
+                sendingMessage ||
+                !supportMessage.trim()
+              }
+              onClick={handleSendMessage}
+            >
+              {sendingMessage
+                ? 'Sending...'
+                : 'Send'}
+            </button>
+          </div>
 
         </div>
 
-        <button
-          type="button"
-          className="logout-button"
-          onClick={handleLogout}
-        >
-          Log Out
-        </button>
+      </div>
+    )
+  }
 
-      </header>
+  // --------------------------------------------------
+  // WALLET PAGE
+  // --------------------------------------------------
 
-      <main className="dashboard-content">
+  function WalletPage() {
+    return (
+      <div className="page-content">
 
-        {/* MENU BUTTON */}
+        <div className="page-title-row">
+          <div>
+            <h1>Bitcoin Wallet</h1>
+            <p>
+              Your Bitcoin wallet information.
+            </p>
+          </div>
+        </div>
 
-        <button
-          type="button"
-          className="menu-button"
-          aria-label="Open menu"
-          onClick={() => setShowMenu(true)}
-        >
-          ☰
-        </button>
+        <div className="wallet-card">
 
-        {/* WELCOME */}
+          <div className="wallet-big-icon">
+            ₿
+          </div>
 
-        <h1>
-          Welcome back, {displayName}
-        </h1>
+          <h2>
+            Your Bitcoin Wallet
+          </h2>
 
-        <p className="welcome-text">
-          Welcome to your account.
-        </p>
+          <p>
+            This is your Bitcoin wallet address.
+          </p>
+
+          <div className="wallet-address-card">
+
+            <small>
+              BTC Wallet Address
+            </small>
+
+            <strong>
+              {walletAddress}
+            </strong>
+
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(
+                    walletAddress
+                  )
+
+                  alert(
+                    'Wallet address copied!'
+                  )
+                } catch {
+                  alert(
+                    'Please copy the address manually.'
+                  )
+                }
+              }}
+            >
+              📋 Copy Address
+            </button>
+
+          </div>
+
+          <div className="demo-notice">
+            <strong>
+               Wallet
+            </strong>
+
+            <p>
+               Crestline Bank interface.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // TRANSFER PAGE
+  // --------------------------------------------------
+
+  function TransferPage() {
+    return (
+      <div className="page-content">
+
+        <div className="page-title-row">
+          <div>
+            <h1>Transfers</h1>
+            <p>
+              Review your recent transfer activity.
+            </p>
+          </div>
+        </div>
+
+        <div className="transaction-card">
+
+          <div className="transaction-card-header">
+            <strong>
+              Recent Transfer
+            </strong>
+
+            <span className="status-complete">
+              Completed
+            </span>
+          </div>
+
+          <div className="transaction-details">
+
+            <div>
+              <span>Recipient</span>
+              <strong>Alex John</strong>
+            </div>
+
+            <div>
+              <span>Amount</span>
+              <strong>$2,500.00</strong>
+            </div>
+
+            <div>
+              <span>Date</span>
+              <strong>July 12, 2026</strong>
+            </div>
+
+            <div>
+              <span>Type</span>
+              <strong>Bank Transfer</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // WITHDRAW PAGE
+  // --------------------------------------------------
+
+  function WithdrawPage() {
+    return (
+      <div className="page-content">
+
+        <div className="page-title-row">
+          <div>
+            <h1>Withdraw</h1>
+            <p>
+              Manage your withdrawal services.
+            </p>
+          </div>
+        </div>
+
+        <div className="maintenance-card">
+
+          <div className="maintenance-icon">
+            🔧
+          </div>
+
+          <h2>
+            Withdraw Unavailable
+          </h2>
+
+          <p>
+            This service is currently unavailable
+            because the site is undergoing maintenance.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate('support')}
+          >
+            💬 Contact Customer Support
+          </button>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // DASHBOARD
+  // --------------------------------------------------
+
+  function DashboardHome() {
+    return (
+      <div className="page-content">
+
+        <div className="welcome-row">
+
+          <div>
+            <h1>
+              Good day, {displayName} 👋
+            </h1>
+
+            <p>
+              Here's what's happening with your
+              accounts today.
+            </p>
+          </div>
+
+          <select className="quick-view">
+            <option>Quick view</option>
+            <option>This month</option>
+            <option>This year</option>
+          </select>
+
+        </div>
 
         {/* BALANCE */}
 
-        <section className="balance-card">
+        <section className="main-balance-card">
 
-          <p>
-            Available Balance
-          </p>
+          <div>
+            <span>
+              Available Balance
+            </span>
 
-          <h2>
-            $80,000.00
-          </h2>
+            <h2>
+              ${formatBalance(balance)}
+            </h2>
 
-          <span>
-            Balance
-          </span>
+            <p>
+              Crestline Checking •••• 4821
+            </p>
+          </div>
+
+          <div className="balance-growth">
+            <strong>
+              +4.25%
+            </strong>
+
+            <span>
+              vs last month
+            </span>
+          </div>
+
+          <div className="balance-card-design">
+            <strong>
+              Crestline Bank
+            </strong>
+
+            <span>
+              •••• 4821
+            </span>
+
+            <b>
+              VISA
+            </b>
+          </div>
 
         </section>
 
-        {/* DASHBOARD FEATURES */}
+        {/* QUICK ACTIONS */}
 
-        <div className="dashboard-grid">
+        <section className="quick-actions">
 
-          {/* CUSTOMER SUPPORT */}
+          <button
+            onClick={() => navigate('transfer')}
+          >
+            <span>↗️</span>
+            <strong>Send Money</strong>
+            <small>Send instantly</small>
+          </button>
 
-          <div className="feature-card">
+          <button
+            onClick={() => navigate('transfer')}
+          >
+            <span>↔️</span>
+            <strong>Transfer</strong>
+            <small>Between accounts</small>
+          </button>
 
-            <h3>
-              💬 Customer Support
-            </h3>
+          <button
+            onClick={() =>
+              alert('Deposit is a demo feature.')
+            }
+          >
+            <span>↓</span>
+            <strong>Deposit</strong>
+            <small>Add funds</small>
+          </button>
 
-            <p>
-              Have a question? Contact customer support.
-            </p>
+          <button
+            onClick={() => navigate('withdraw')}
+          >
+            <span>▣</span>
+            <strong>Withdraw</strong>
+            <small>Cash out</small>
+          </button>
 
-            <button
-              type="button"
-              className="card-button"
-              onClick={() => {
-                setShowSupport(true)
-                loadMessages()
-              }}
-            >
-              Messages
-            </button>
+          <button
+            onClick={() =>
+              alert('Pay Bills is a demo feature.')
+            }
+          >
+            <span>▤</span>
+            <strong>Pay Bills</strong>
+            <small>Pay your bills</small>
+          </button>
 
-          </div>
+          <button
+            onClick={() => navigate('wallet')}
+          >
+            <span>•••</span>
+            <strong>More</strong>
+            <small>See all</small>
+          </button>
 
-          {/* BITCOIN WALLET */}
+        </section>
 
-          <div className="feature-card">
+        {/* TWO COLUMNS */}
 
-            <h3>
-              ₿ Bitcoin Wallet
-            </h3>
+        <div className="dashboard-two-columns">
 
-            <p>
-              View your BTC wallet information.
-            </p>
+          {/* ACCOUNTS */}
 
-            <button
-              type="button"
-              className="card-button"
-              onClick={() => setShowWallet(true)}
-            >
-              Open Wallet
-            </button>
+          <section className="dashboard-card">
 
-          </div>
+            <div className="card-heading">
+              <h2>Accounts</h2>
 
-          {/* TRANSFER */}
+              <button
+                onClick={() =>
+                  alert(
+                    'Accounts overview is a demo feature.'
+                  )
+                }
+              >
+                View all
+              </button>
+            </div>
 
-          <div className="feature-card">
+            {accounts.map((account) => (
+              <div
+                className="account-row"
+                key={account.name}
+              >
 
-            <h3>
-              ↗️ Transfer
-            </h3>
+                <div className="account-icon">
+                  {account.icon}
+                </div>
 
-            <p>
-              View your previous transfer.
-            </p>
+                <div className="account-info">
+                  <strong>
+                    {account.name}
+                  </strong>
 
-            <button
-              type="button"
-              className="card-button"
-              onClick={() => setShowTransfer(true)}
-            >
-              Transfer
-            </button>
+                  <span>
+                    {account.number}
+                  </span>
+                </div>
 
-          </div>
+                <div className="account-balance">
+                  <strong>
+                    ${formatBalance(account.balance)}
+                  </strong>
 
-          {/* WITHDRAW */}
+                  <span>
+                    Available balance
+                  </span>
+                </div>
 
-          <div className="feature-card">
+              </div>
+            ))}
 
-            <h3>
-              💸 Withdraw
-            </h3>
+          </section>
 
-            <p>
-              Withdrawal services.
-            </p>
+          {/* TRANSACTIONS */}
 
-            <button
-              type="button"
-              className="card-button"
-              onClick={() => setShowWithdraw(true)}
-            >
-              Withdraw
-            </button>
+          <section className="dashboard-card">
 
-          </div>
+            <div className="card-heading">
+              <h2>
+                Recent Transactions
+              </h2>
+
+              <button
+                onClick={() =>
+                  alert(
+                    'Transaction history is a demo feature.'
+                  )
+                }
+              >
+                View all
+              </button>
+            </div>
+
+            {transactions.map((item) => (
+              <div
+                className="transaction-row"
+                key={item.title}
+              >
+
+                <div
+                  className={`transaction-icon ${
+                    item.type
+                  }`}
+                >
+                  {item.icon}
+                </div>
+
+                <div className="transaction-info">
+                  <strong>
+                    {item.title}
+                  </strong>
+
+                  <span>
+                    {item.date}
+                  </span>
+                </div>
+
+                <strong
+                  className={`transaction-amount ${
+                    item.type
+                  }`}
+                >
+                  {item.amount}
+                </strong>
+
+              </div>
+            ))}
+
+          </section>
 
         </div>
 
-        {/* DEMO NOTICE */}
+        {/* LOWER GRID */}
 
-        <div className="demo-notice">
+        <div className="dashboard-lower-grid">
+
+          {/* SPENDING */}
+
+          <section className="dashboard-card spending-card">
+
+            <div className="card-heading">
+              <h2>
+                Spending Overview
+              </h2>
+
+              <select>
+                <option>
+                  This Month
+                </option>
+                <option>
+                  Last Month
+                </option>
+              </select>
+            </div>
+
+            <h3 className="spending-total">
+              $1,240.50
+            </h3>
+
+            <p className="spending-subtitle">
+              Total spent this month
+            </p>
+
+            <div className="spending-chart">
+
+              <div className="donut">
+                <div>
+                  <strong>
+                    $1.2K
+                  </strong>
+
+                  <span>
+                    spent
+                  </span>
+                </div>
+              </div>
+
+              <div className="spending-list">
+
+                <div>
+                  <span>
+                    🔵 Shopping
+                  </span>
+
+                  <strong>
+                    $450.20
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    🔵 Bills & Utilities
+                  </span>
+
+                  <strong>
+                    $320.40
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    🔵 Transfer
+                  </span>
+
+                  <strong>
+                    $280.00
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    🔵 Entertainment
+                  </span>
+
+                  <strong>
+                    $120.30
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    🔵 Others
+                  </span>
+
+                  <strong>
+                    $69.60
+                  </strong>
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+          {/* CARD */}
+
+          <section className="dashboard-card my-card">
+
+            <div className="card-heading">
+              <h2>My Cards</h2>
+
+              <button>
+                View all
+              </button>
+            </div>
+
+            <div className="debit-card">
+
+              <strong>
+                Crestline Bank
+              </strong>
+
+              <span>
+                •••• 4821
+              </span>
+
+              <small>
+                DEBIT CARD
+              </small>
+
+              <b>
+                VISA
+              </b>
+
+            </div>
+
+            <div className="card-limit">
+
+              <div>
+                <span>
+                  Spend limit
+                </span>
+
+                <strong>
+                  $2,000.00 / $5,000.00
+                </strong>
+              </div>
+
+              <div className="limit-bar">
+                <span />
+              </div>
+
+            </div>
+
+            <div className="card-actions">
+
+              <button>
+                🔒
+                <span>
+                  Lock Card
+                </span>
+              </button>
+
+              <button>
+                ▣
+                <span>
+                  Card Details
+                </span>
+              </button>
+
+              <button>
+                ⚙
+                <span>
+                  Settings
+                </span>
+              </button>
+
+            </div>
+
+          </section>
+
+        </div>
+
+        {/* BOTTOM GRID */}
+
+        <div className="bottom-dashboard-grid">
+
+          <section className="dashboard-card">
+
+            <div className="card-heading">
+              <h2>
+                Upcoming Bills
+              </h2>
+
+              <button>
+                View all
+              </button>
+            </div>
+
+            <div className="bill-row">
+              <span>⚡ Electricity Bill</span>
+              <strong>$120.00</strong>
+            </div>
+
+            <div className="bill-row">
+              <span>◉ Internet Bill</span>
+              <strong>$60.00</strong>
+            </div>
+
+            <button className="primary-wide-button">
+              Pay All
+            </button>
+
+          </section>
+
+          <section className="dashboard-card">
+
+            <div className="card-heading">
+              <h2>
+                Quick Transfer
+              </h2>
+
+              <button>
+                View all
+              </button>
+            </div>
+
+            <div className="contact-row">
+              <span>JD</span>
+              <div>
+                <strong>John Doe</strong>
+                <small>
+                  +1 (555) 123-4567
+                </small>
+              </div>
+            </div>
+
+            <div className="contact-row">
+              <span>JS</span>
+              <div>
+                <strong>Jane Smith</strong>
+                <small>
+                  +1 (555) 987-6543
+                </small>
+              </div>
+            </div>
+
+            <button
+              className="primary-wide-button"
+              onClick={() => navigate('transfer')}
+            >
+              New Transfer
+            </button>
+
+          </section>
+
+          <section className="dashboard-card">
+
+            <div className="card-heading">
+              <h2>
+                Notifications
+              </h2>
+
+              <button>
+                View all
+              </button>
+            </div>
+
+            <div className="notification-row">
+              <span>↓</span>
+              <div>
+                <strong>
+                  Your salary has been credited
+                </strong>
+
+                <small>
+                  May 10, 2026 • 09:00 AM
+                </small>
+              </div>
+            </div>
+
+            <div className="notification-row">
+              <span>▣</span>
+              <div>
+                <strong>
+                  Electricity bill is due
+                </strong>
+
+                <small>
+                  May 12, 2026 • 10:24 AM
+                </small>
+              </div>
+            </div>
+
+            <div className="notification-row">
+              <span>!</span>
+              <div>
+                <strong>
+                  New login detected
+                </strong>
+
+                <small>
+                  May 12, 2026 • 08:15 AM
+                </small>
+              </div>
+            </div>
+
+          </section>
+
+        </div>
+
+        <footer className="dashboard-footer">
+          <span>
+            ©️ 2022 Crestline Bank All rights reserved.
+          </span>
+
+          <span>
+            Privacy Policy • Terms of Service
+          </span>
+        </footer>
+
+      </div>
+    )
+  }
+
+  // --------------------------------------------------
+  // MAIN APP
+  // --------------------------------------------------
+
+  return (
+    <div className="bank-dashboard">
+
+      {/* SIDEBAR */}
+
+      <aside className="sidebar">
+
+        <div className="sidebar-brand">
+          <div className="brand-symbol">
+            ◆
+          </div>
 
           <strong>
-            Crestline Bank D
+            Crestline Bank
           </strong>
+        </div>
 
-          <p>
-            Crestline Bank provides secure and convenient personal banking services designed to help you manage your finances and support your business needs with ease.
-          </p>
+        <nav className="sidebar-nav">
+
+          <button
+            className={
+              activePage === 'dashboard'
+                ? 'active'
+                : ''
+            }
+            onClick={() =>
+              navigate('dashboard')
+            }
+          >
+            <span>▣</span>
+            Dashboard
+          </button>
+
+          <button
+            onClick={() =>
+              alert('Accounts is a demo section.')
+            }
+          >
+            <span>▤</span>
+            Accounts
+          </button>
+
+          <button
+            className={
+              activePage === 'transfer'
+                ? 'active'
+                : ''
+            }
+            onClick={() =>
+              navigate('transfer')
+            }
+          >
+            <span>↔️</span>
+            Transfers
+          </button>
+
+          <button
+            onClick={() =>
+              navigate('transfer')
+            }
+          >
+            <span>↑</span>
+            Send Money
+          </button>
+
+          <button
+            onClick={() =>
+              alert('Pay Bills is a demo section.')
+            }
+          >
+            <span>▤</span>
+            Pay Bills
+          </button>
+
+          <button
+            onClick={() =>
+              alert('Cards is a demo section.')
+            }
+          >
+            <span>▭</span>
+            Cards
+          </button>
+
+          <button
+            onClick={() =>
+              alert(
+                'Transactions is a demo section.'
+              )
+            }
+          >
+            <span>⇄</span>
+            Transactions
+          </button>
+
+          <button
+            onClick={() =>
+              alert(
+                'Beneficiaries is a demo section.'
+              )
+            }
+          >
+            <span>♙</span>
+            Beneficiaries
+          </button>
+
+          <button
+            onClick={() =>
+              alert(
+                'Statements is a demo section.'
+              )
+            }
+          >
+            <span>▤</span>
+            Statements
+          </button>
+
+          <button
+            onClick={() =>
+              alert(
+                'Notifications is a demo section.'
+              )
+            }
+          >
+            <span>♧</span>
+            Notifications
+          </button>
+
+          <button
+            onClick={() =>
+              alert('Settings is a demo section.')
+            }
+          >
+            <span>⚙</span>
+            Settings
+          </button>
+
+          <button
+            className={
+              activePage === 'support'
+                ? 'active'
+                : ''
+            }
+            onClick={() =>
+              navigate('support')
+            }
+          >
+            <span>?</span>
+            Support
+          </button>
+
+        </nav>
+
+        <div className="sidebar-bottom">
+
+          <button
+            onClick={handleLogout}
+            className="logout-sidebar"
+          >
+            <span>↪</span>
+            Log out
+          </button>
+
+          <div className="refer-card">
+            <strong>
+              Refer & Earn
+            </strong>
+
+            <p>
+              Invite friends and earn rewards.
+            </p>
+
+            <button>
+              Refer Now
+            </button>
+
+            <span className="gift">
+              🎁
+            </span>
+          </div>
 
         </div>
 
-      </main>
+      </aside>
+
+      {/* MAIN AREA */}
+
+      <div className="main-area">
+
+        {/* TOP BAR */}
+
+        <header className="topbar">
+
+          <div className="mobile-brand">
+            ◆ Crestline Bank
+          </div>
+
+          <div className="search-box">
+            <span>⌕</span>
+
+            <input
+              type="search"
+              placeholder="Search anything..."
+            />
+          </div>
+
+          <button className="notification-button">
+            ♧
+            <span>3</span>
+          </button>
+
+          <div className="profile-area">
+
+            <button
+              type="button"
+              className="profile-button"
+              onClick={() =>
+                setShowProfileMenu(
+                  !showProfileMenu
+                )
+              }
+            >
+              <Avatar />
+
+              <span>
+                {displayName}
+              </span>
+
+              <small>⌄</small>
+            </button>
+
+            {showProfileMenu && (
+              <div className="profile-dropdown">
+
+                <div className="profile-dropdown-top">
+
+                  <Avatar size="large" />
+
+                  <div>
+                    <strong>
+                      {displayName}
+                    </strong>
+
+                    <small>
+                      {session.user.email}
+                    </small>
+                  </div>
+
+                </div>
+
+                <label className="upload-avatar-button">
+
+                  {uploadingAvatar
+                    ? 'Uploading...'
+                    : '📷 Change Profile Picture'}
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={
+                      handleAvatarUpload
+                    }
+                    disabled={
+                      uploadingAvatar
+                    }
+                  />
+
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                >
+                  ↪ Log Out
+                </button>
+
+              </div>
+            )}
+
+          </div>
+
+        </header>
+
+        {/* PAGE */}
+
+        <main>
+
+          {activePage === 'dashboard' &&
+            <DashboardHome />}
+
+          {activePage === 'support' &&
+            <SupportPage />}
+
+          {activePage === 'wallet' &&
+            <WalletPage />}
+
+          {activePage === 'transfer' &&
+            <TransferPage />}
+
+          {activePage === 'withdraw' &&
+            <WithdrawPage />}
+
+        </main>
+
+      </div>
 
     </div>
   )
