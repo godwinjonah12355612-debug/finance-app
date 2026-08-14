@@ -29,6 +29,7 @@ function App() {
   // PAGES
   const [activePage, setActivePage] = useState('dashboard')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [showCardDetails, setShowCardDetails] = useState(false)
 
   // SUPPORT
   const [supportMessage, setSupportMessage] = useState('')
@@ -1099,32 +1100,15 @@ function App() {
 
           <div className="support-input">
 
-            <textarea
-              value={supportMessage}
-              onChange={(e) =>
-                setSupportMessage(
-                  e.target.value
-                )
-              }
-              placeholder="Type a message..."
-              rows={2}
-              disabled={sendingMessage}
-              onKeyDown={(e) => {
-                if (
-                  e.key === 'Enter' &&
-                  !e.shiftKey
-                ) {
-                  e.preventDefault()
-
-                  if (
-                    supportMessage.trim() &&
-                    !sendingMessage
-                  ) {
-                    handleSendMessage()
-                  }
-                }
-              }}
-            />
+           <textarea
+  value={supportMessage}
+  onChange={(e) => {
+    setSupportMessage(e.currentTarget.value)
+  }}
+  placeholder="Type a message..."
+  rows={2}
+  disabled={sendingMessage}
+/>
 
             <button
               type="button"
@@ -1753,51 +1737,76 @@ function App() {
 
           </div>
 
-          <div className="card-actions">
+          {showCardDetails && (
+  <div className="card-details-panel">
 
-            <button
-              type="button"
-              onClick={() =>
-                alert(
-                  'Card lock is a demo feature.'
-                )
-              }
-            >
-              🔒
-              <span>
-                Lock Card
-              </span>
-            </button>
+    <div className="card-details-header">
+      <div>
+        <h2>Card Details</h2>
+        <p>Your debit card information</p>
+      </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                alert(
-                  'Card details are a demo feature.'
-                )
-              }
-            >
-              ▣
-              <span>
-                Card Details
-              </span>
-            </button>
+      <button
+        type="button"
+        className="close-card-details"
+        onClick={() => setShowCardDetails(false)}
+      >
+        ×
+      </button>
+    </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                alert(
-                  'Card settings are a demo feature.'
-                )
-              }
-            >
-              ⚙
-              <span>
-                Settings
-              </span>
-            </button>
+    <div className="card-details-list">
 
-          </div>
+      <div className="card-detail-item">
+        <span>Cardholder</span>
+        <strong>{displayName}</strong>
+      </div>
+
+      <div className="card-detail-item">
+        <span>Card Number</span>
+        <strong>8754 3452 2345 4821</strong>
+      </div>
+
+      <div className="card-detail-item">
+        <span>Card Type</span>
+        <strong>Visa Debit</strong>
+      </div>
+
+      <div className="card-detail-item">
+        <span>Expiry Date</span>
+        <strong>12/29</strong>
+      </div>
+
+      <div className="card-detail-item">
+        <span>CVV</span>
+        <strong>678</strong>
+      </div>
+
+      <div className="card-detail-item">
+        <span>Status</span>
+        <strong className="card-active-status">
+          ● Active
+        </strong>
+      </div>
+
+      <div className="card-detail-item">
+        <span>Spending Limit</span>
+        <strong>$5,000.00</strong>
+      </div>
+
+      <div className="card-detail-item">
+        <span>Available Spending</span>
+        <strong>$3,000.00</strong>
+      </div>
+
+    </div>
+
+    <div className="card-details-security">
+      🔒 Your card information is protected.
+    </div>
+
+  </div>
+)}
 
         </section>
 
