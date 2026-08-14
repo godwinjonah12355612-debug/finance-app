@@ -1435,7 +1435,7 @@ function App() {
                   type="button"
                   onClick={() =>
                     alert(
-                      `${bill.name} payment is a demo feature.`
+                      `${bill.name} unvailable.`
                     )
                   }
                 >
@@ -1736,7 +1736,15 @@ function App() {
             </div>
 
           </div>
-
+          <button
+  type="button"
+  className="primary-wide-button"
+  onClick={() => setShowCardDetails(true)}
+>
+  ▣ View Card Details
+</button>
+          
+         
           {showCardDetails && (
   <div className="card-details-panel">
 
@@ -2516,7 +2524,7 @@ function App() {
               </strong>
 
               <span>
-                •••• 4821
+                3452 4821
               </span>
 
               <small>
@@ -3158,9 +3166,8 @@ function App() {
 
           {activePage === 'dashboard' &&
             <DashboardHome />}
-
-          {activePage === 'support' &&
-            <SupportPage />}
+            {activePage === 'support' &&
+             SupportPage()}
 
           {activePage === 'wallet' &&
             <WalletPage />}
