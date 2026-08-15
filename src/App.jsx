@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import './App.css'
-   
 function TransferPage({ onBack }) {
-  const [recipientEmail, setRecipientEmail] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [routingNumber, setRoutingNumber] = useState('')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [transferLoading, setTransferLoading] = useState(false)
@@ -16,12 +16,18 @@ function TransferPage({ onBack }) {
 
     setTransferMessage('')
 
-    const email = recipientEmail.trim()
+    const account = accountNumber.trim()
+    const routing = routingNumber.trim()
     const transferAmount = Number(amount)
     const transferDescription = description.trim()
 
-    if (!email) {
-      setTransferMessage('Please enter the recipient email.')
+    if (!account) {
+      setTransferMessage('Please enter the recipient account number.')
+      return
+    }
+
+    if (!routing) {
+      setTransferMessage('Please enter the recipient routing number.')
       return
     }
 
@@ -33,25 +39,11 @@ function TransferPage({ onBack }) {
     try {
       setTransferLoading(true)
 
-      const { data: recipient, error: recipientError } = await supabase
-        .from('profiles')
-        .select('id, display_name, email')
-        .eq('email', email)
-        .maybeSingle()
-
-      if (recipientError) {
-        throw recipientError
-      }
-
-      if (!recipient) {
-        setTransferMessage('Recipient was not found.')
-        return
-      }
-
       const { error: transferError } = await supabase.rpc(
         'transfer_money',
         {
-          p_recipient_id: recipient.id,
+          p_recipient_account_number: account,
+          p_recipient_routing_number: routing,
           p_amount: transferAmount,
           p_description: transferDescription || null
         }
@@ -62,12 +54,11 @@ function TransferPage({ onBack }) {
       }
 
       setTransferMessage(
-        `Transfer of $${transferAmount.toFixed(2)} to ${
-          recipient.display_name || recipient.email
-        } was successful.`
+        `Transfer of $${transferAmount.toFixed(2)} was successful.`
       )
 
-      setRecipientEmail('')
+      setAccountNumber('')
+      setRoutingNumber('')
       setAmount('')
       setDescription('')
 
@@ -88,7 +79,10 @@ function TransferPage({ onBack }) {
       <div className="page-title-row">
         <div>
           <h1>Transfers</h1>
-          <p>Send money to another Crestline customer.</p>
+
+          <p>
+            Send money to another Crestline customer.
+          </p>
         </div>
 
         <button
@@ -111,15 +105,36 @@ function TransferPage({ onBack }) {
           <div className="transaction-details">
 
             <div>
-              <span>Recipient Email</span>
+              <span>Recipient Account Number</span>
 
               <input
-                type="email"
-                value={recipientEmail}
-                onChange={(e) => {
-                  setRecipientEmail(e.target.value)
-                }}
-                placeholder="customer@example.com"
+                type="text"
+                inputMode="numeric"
+                value={accountNumber}
+                onChange={(e) =>
+                  setAccountNumber(
+                    e.target.value.replace(/\D/g, '')
+                  )
+                }
+                placeholder="Enter account number"
+                disabled={transferLoading}
+                autoComplete="off"
+              />
+            </div>
+
+            <div>
+              <span>Routing Number</span>
+
+              <input
+                type="text"
+                inputMode="numeric"
+                value={routingNumber}
+                onChange={(e) =>
+                  setRoutingNumber(
+                    e.target.value.replace(/\D/g, '')
+                  )
+                }
+                placeholder="Enter routing number"
                 disabled={transferLoading}
                 autoComplete="off"
               />
@@ -181,7 +196,6 @@ function TransferPage({ onBack }) {
     </div>
   )
 }
-
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -248,59 +262,54 @@ function App() {
   // --------------------------------------------------
   // DEMO TRANSACTIONS
   // --------------------------------------------------
+   const [transactions, setTransactions] = useState([]);
 
-  const transactions = [
-    {
-      title: 'Amazon Shopping',
-      date: 'May 12, 2026 • 10:24 AM',
-      amount: '-$84.20',
-      type: 'out',
-      icon: 'a',
-    },
-    {
-      title: 'Salary Deposit',
-      date: 'May 10, 2026 • 09:00 AM',
-      amount: '+$3,500.00',
-      type: 'in',
-      icon: '↓',
-    },
-    {
-      title: 'Electricity Bill',
-      date: 'May 8, 2026 • 04:45 PM',
-      amount: '-$120.00',
-      type: 'out',
-      icon: 'ϟ',
-    },
-    {
-      title: 'Transfer to Savings',
-      date: 'May 7, 2026 • 11:15 AM',
-      amount: '-$500.00',
-      type: 'out',
-      icon: '↔️',
-    },
-    {
-      title: 'Netflix Subscription',
-      date: 'May 5, 2026 • 08:30 PM',
-      amount: '-$15.99',
-      type: 'out',
-      icon: 'N',
-    },
-    {
-      title: 'Grocery Store',
-      date: 'May 3, 2026 • 06:20 PM',
-      amount: '-$145.80',
-      type: 'out',
-      icon: 'G',
-    },
-    {
-      title: 'Freelance Payment',
-      date: 'May 1, 2026 • 01:10 PM',
-      amount: '+$1,250.00',
-      type: 'in',
-      icon: '↓',
-    },
-  ]
+useEffect(() => {
+  if (!session?.user?.id) return;
 
+  const loadTransactions = async () => {
+    const { data, error } = await supabase
+      .from('transfers')
+      .select('*')
+      .or(
+        `sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`
+      )
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading transactions:', error);
+      return;
+    }
+
+    const formattedTransactions = (data || []).map((item) => {
+      const isOutgoing = item.sender_id === session.user.id;
+
+      return {
+        title: item.description || (isOutgoing ? 'Money Transfer' : 'Money Received'),
+        date: new Date(item.created_at).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        amount: `${isOutgoing ? '-' : '+'}$${Number(item.amount).toLocaleString(
+          'en-US',
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }
+        )}`,
+        type: isOutgoing ? 'out' : 'in',
+        icon: isOutgoing ? '↗' : '↓',
+      };
+    });
+
+    setTransactions(formattedTransactions);
+  };
+
+  loadTransactions();
+}, [session?.user?.id]);
   // --------------------------------------------------
   // BILLS
   // --------------------------------------------------
@@ -2032,79 +2041,68 @@ function App() {
   // --------------------------------------------------
   // NOTIFICATIONS PAGE
   // --------------------------------------------------
+     function NotificationsPage() {
+  return (
+    <div className="page-content">
 
-  function NotificationsPage() {
-    return (
-      <div className="page-content">
+      <div className="page-title-row">
+        <div>
+          <h1>Notifications</h1>
 
-        <div className="page-title-row">
-          <div>
-            <h1>Notifications</h1>
-
-            <p>
-              View your latest account notifications.
-            </p>
-          </div>
-
-          <BackButton />
+          <p>
+            View your latest account activity and transfer notifications.
+          </p>
         </div>
 
-        <section className="dashboard-card">
-
-          <div className="notification-row">
-
-            <span>↓</span>
-
-            <div>
-              <strong>
-                Your salary has been credited
-              </strong>
-
-              <small>
-                May 10, 2026 • 09:00 AM
-              </small>
-            </div>
-
-          </div>
-
-          <div className="notification-row">
-
-            <span>▣</span>
-
-            <div>
-              <strong>
-                Electricity bill is due
-              </strong>
-
-              <small>
-                May 12, 2026 • 10:24 AM
-              </small>
-            </div>
-
-          </div>
-
-          <div className="notification-row">
-
-            <span>!</span>
-
-            <div>
-              <strong>
-                New login detected
-              </strong>
-
-              <small>
-                May 12, 2026 • 08:15 AM
-              </small>
-            </div>
-
-          </div>
-
-        </section>
-
+        <BackButton />
       </div>
-    )
-  }
 
+      <section className="dashboard-card">
+
+        {transactions.length === 0 ? (
+          <div className="notification-row">
+            <span>🔔</span>
+
+            <div>
+              <strong>No new notifications</strong>
+
+              <small>
+                Your account activity will appear here.
+              </small>
+            </div>
+          </div>
+        ) : (
+          transactions.map((item, index) => (
+            <div
+              className="notification-row"
+              key={`${item.title}-${item.date}-${index}`}
+            >
+
+              <span>
+                {item.type === 'out' ? '↗️' : '↓'}
+              </span>
+
+              <div>
+                <strong>
+                  {item.type === 'out'
+                    ? `Money sent: ${item.title}`
+                    : `Money received: ${item.title}`}
+                </strong>
+
+                <small>
+                  {item.date} • {item.amount}
+                </small>
+              </div>
+
+            </div>
+          ))
+        )}
+
+      </section>
+
+    </div>
+  )
+}
   // --------------------------------------------------
   // MORE PAGE
   // --------------------------------------------------
