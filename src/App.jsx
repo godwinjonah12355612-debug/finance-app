@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import './App.css'
-function TransferPage({ onBack }) {
+function TransferPage({ onBack, onSupport }) {
   const [accountNumber, setAccountNumber] = useState('')
   const [routingNumber, setRoutingNumber] = useState('')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferMessage, setTransferMessage] = useState('')
+  const [recipientNotFound, setRecipientNotFound] = useState(false)
 
   const handleTransfer = async (e) => {
     e.preventDefault()
@@ -15,6 +16,7 @@ function TransferPage({ onBack }) {
     if (transferLoading) return
 
     setTransferMessage('')
+    setRecipientNotFound(false)
 
     const account = accountNumber.trim()
     const routing = routingNumber.trim()
@@ -50,6 +52,22 @@ function TransferPage({ onBack }) {
       )
 
       if (transferError) {
+        const errorMessage =
+          transferError?.message?.toLowerCase() || ''
+
+        // Recipient account/routing details were not found
+        if (
+          errorMessage.includes('recipient account') &&
+          (
+            errorMessage.includes('not found') ||
+            errorMessage.includes('could not be found')
+          )
+        ) {
+          setRecipientNotFound(true)
+          setTransferMessage('Recipient account could not be found.')
+          return
+        }
+
         throw transferError
       }
 
@@ -186,11 +204,26 @@ function TransferPage({ onBack }) {
         </form>
 
         {transferMessage && (
-          <div className="transfer-message">
-            {transferMessage}
-          </div>
-        )}
+  <div
+    className={
+      recipientNotFound
+        ? 'transfer-message recipient-not-found'
+        : 'transfer-message'
+    }
+  >
+    <div>{transferMessage}</div>
 
+    {recipientNotFound && (
+      <button
+        type="button"
+        className="customer-support-button"
+        onClick={onSupport}
+      >
+        Contact Customer Support
+      </button>
+    )}
+  </div>
+)}
       </div>
 
     </div>
@@ -3304,7 +3337,11 @@ useEffect(() => {
             <WalletPage />}
 
           {activePage === 'transfer' &&
-            <TransferPage onBack={backToDashboard} />}
+            <TransferPage
+      onBack={backToDashboard}
+         onSupport={() => navigate('support')}
+         />
+        }
 
           {activePage === 'withdraw' &&
             <WithdrawPage />}

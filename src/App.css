@@ -4183,3 +4183,33 @@ body,
     font-size: 28px;
   }
 }
+
+.recipient-not-found {
+  margin-top: 18px;
+  text-align: center;
+  color: #b42318;
+  font-weight: 600;
+}
+
+.customer-support-button {
+  margin-top: 14px;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  background: #162d63;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.customer-support-button:hover {
+  background: #244aa5;
+  transform: translateY(-1px);
+}
+
+.customer-support-button:active {
+  transform: translateY(0);
+}
