@@ -1578,59 +1578,78 @@ useEffect(() => {
   // ACCOUNTS PAGE
   // --------------------------------------------------
 
-  function AccountsPage() {
-    return (
-      <div className="page-content">
+   function AccountsPage() {
+  return (
+    <div className="page-content">
 
-        <div className="page-title-row">
-          <div>
-            <h1>Accounts</h1>
+      <div className="page-title-row">
+        <div>
+          <h1>Accounts</h1>
 
-            <p>
-              View all of your Crestline accounts.
-            </p>
-          </div>
-
-          <BackButton />
+          <p>
+            View all of your Crestline accounts.
+          </p>
         </div>
 
-        <div className="more-section-grid">
+        <BackButton />
+      </div>
 
-          {accounts.map((account) => (
-            <div
-              className="dashboard-card more-account-card"
-              key={account.name}
-            >
+      <div className="more-section-grid">
 
-              <div className="account-icon">
-                {account.icon}
-              </div>
+        {accounts.map((account) => (
+          <div
+            className="dashboard-card more-account-card"
+            key={account.name}
+          >
 
-              <h2>
-                {account.name}
-              </h2>
+            <div className="account-icon">
+              {account.icon}
+            </div>
 
-              <span>
-                {account.number}
-              </span>
+            <h2>
+              {account.name}
+            </h2>
 
-              <strong>
-                ${formatBalance(account.balance)}
-              </strong>
+            <div className="account-details">
 
-              <small>
-                Available balance
-              </small>
+              <p>
+                <strong>Account Name:</strong>{" "}
+                {account.accountName || "Not available"}
+              </p>
+
+              <p>
+                <strong>Account Number:</strong>{" "}
+                {account.accountNumber || "Not available"}
+              </p>
+
+              <p>
+                <strong>Routing Number:</strong>{" "}
+                {account.routingNumber || "Not available"}
+              </p>
+
+              <p>
+                <strong>Email:</strong>{" "}
+                {account.email || "Not available"}
+              </p>
 
             </div>
-          ))}
 
-        </div>
+            <strong className="account-balance">
+              ${formatBalance(account.balance)}
+            </strong>
+
+            <small>
+              Available balance
+            </small>
+
+          </div>
+        ))}
 
       </div>
-    )
-  }
 
+    </div>
+  )
+}
   // --------------------------------------------------
   // TRANSACTIONS PAGE
   // --------------------------------------------------
