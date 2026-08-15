@@ -204,6 +204,8 @@ function App() {
   const [profileName, setProfileName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [balance, setBalance] = useState(0)
+   const [accountNumber, setAccountNumber] = useState('')
+  const [routingNumber, setRoutingNumber] = useState('')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
 
@@ -238,26 +240,17 @@ function App() {
   // ACCOUNTS
   // --------------------------------------------------
 
-  const accounts = [
-    {
-      name: 'Checking Account',
-      number: '•••• 4821',
-      balance: Number(balance),
-      icon: '▣',
-    },
-    {
-      name: 'Savings Account',
-      number: '•••• 7534',
-      balance: 12890.50,
-      icon: '🐷',
-    },
-    {
-      name: 'Business Account',
-      number: '•••• 9912',
-      balance: 8200.75,
-      icon: '💼',
-    },
-  ]
+    const accounts = [
+  {
+    name: 'Checking Account',
+    accountName: profileName,
+    accountNumber: accountNumber,
+    routingNumber: routingNumber,
+    email: session?.user?.email || '',
+    balance: Number(balance),
+    icon: '▣',
+  },
+]
 
   // --------------------------------------------------
   // DEMO TRANSACTIONS
@@ -410,7 +403,7 @@ useEffect(() => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url, balance')
+        .select('display_name, avatar_url, balance, account_number, routing_number')
         .eq('id', session.user.id)
         .maybeSingle()
 
