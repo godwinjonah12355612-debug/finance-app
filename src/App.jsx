@@ -438,6 +438,8 @@ useEffect(() => {
           ? data.balance
           : Number(data?.balance || 0)
       )
+      setAccountNumber(data?.account_number || '')
+      setRoutingNumber(data?.routing_number || '')
     }
 
     loadProfile()
