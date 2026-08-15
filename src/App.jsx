@@ -9,11 +9,132 @@ function TransferPage({ onBack, onSupport }) {
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferMessage, setTransferMessage] = useState('')
   const [recipientNotFound, setRecipientNotFound] = useState(false)
+  const [hasPin, setHasPin] = useState(false)
+const [pinChecked, setPinChecked] = useState(false)
+const [showPinSetup, setShowPinSetup] = useState(false)
+const [pin, setPin] = useState('')
+const [confirmPin, setConfirmPin] = useState('')
+const [pinLoading, setPinLoading] = useState(false)
+const [pinMessage, setPinMessage] = useState('')
+const [showTransferPin, setShowTransferPin] = useState(false)
+const [transferPin, setTransferPin] = useState('')
+ useEffect(() => {
+  const checkPin = async () => {
+    try {
+      const { data, error } = await supabase.rpc(
+        'has_transaction_pin'
+      )
 
-  const handleTransfer = async (e) => {
-    e.preventDefault()
+      if (error) {
+        console.error('PIN check error:', error)
+        return
+      }
 
+      setHasPin(Boolean(data))
+    } catch (error) {
+      console.error('PIN check error:', error)
+    } finally {
+      setPinChecked(true)
+    }
+  }
+
+  checkPin()
+}, [])
+
+const handleCreatePin = async (e) => {
+  e.preventDefault()
+
+  setPinMessage('')
+
+  if (!/^\d{4,6}$/.test(pin)) {
+    setPinMessage('PIN must contain 4 to 6 digits.')
+    return
+  }
+
+  if (pin !== confirmPin) {
+    setPinMessage('PINs do not match.')
+    return
+  }
+
+  try {
+    setPinLoading(true)
+
+    const { error } = await supabase.rpc(
+      'set_transaction_pin',
+      {
+        p_pin: pin
+      }
+    )
+
+    if (error) {
+      throw error
+    }
+
+    setHasPin(true)
+    setShowPinSetup(false)
+    setPin('')
+    setConfirmPin('')
+    setPinMessage('')
+  } catch (error) {
+    console.error('Create PIN error:', error)
+
+    setPinMessage(
+      error?.message || 'Could not create transaction PIN.'
+    )
+  } finally {
+    setPinLoading(false)
+  }
+}
+const handleVerifyTransferPin = async () => {
+  setPinMessage('')
+  setPinLoading(true)
+
+  try {
+    const { data, error } = await supabase.rpc(
+      'verify_transaction_pin',
+      {
+        p_pin: transferPin
+      }
+    )
+
+    if (error) {
+      throw error
+    }
+
+    if (!data) {
+      setPinMessage('Incorrect transaction PIN.')
+      return
+    }
+
+    setShowTransferPin(false)
+    setTransferPin('')
+    setPinMessage('')
+
+    await handleTransfer(null, true)
+
+  } catch (error) {
+    console.error('PIN verification error:', error)
+
+    setPinMessage(
+      error?.message || 'Could not verify transaction PIN.'
+    )
+  } finally {
+    setPinLoading(false)
+  }
+}
+
+const handleTransfer = async (e, bypassPin = false) => {
+  e?.preventDefault()
     if (transferLoading) return
+    if (!bypassPin) {
+  if (!hasPin) {
+    setShowPinSetup(true)
+    return
+  }
+
+  setShowTransferPin(true)
+  return
+}
 
     setTransferMessage('')
     setRecipientNotFound(false)
@@ -116,9 +237,70 @@ function TransferPage({ onBack, onSupport }) {
 
         <div className="transaction-card-header">
           <strong>Send Money</strong>
-        </div>
+</div>
 
-        <form onSubmit={handleTransfer}>
+{showPinSetup && (
+  <div className="transaction-card pin-card">
+    <h3>Create Transaction PIN</h3>
+
+    <p>Create a 4 to 6 digit PIN to protect your transfers.</p>
+
+    <input
+      type="password"
+      inputMode="numeric"
+      maxLength={6}
+      placeholder="Enter PIN"
+      value={pin}
+      onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+    />
+
+    <input
+      type="password"
+      inputMode="numeric"
+      maxLength={6}
+      placeholder="Confirm PIN"
+      value={confirmPin}
+      onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+    />
+
+    {pinMessage && <p>{pinMessage}</p>}
+
+    <button type="button" onClick={handleCreatePin} disabled={pinLoading}>
+      {pinLoading ? "Creating PIN..." : "Create PIN"}
+    </button>
+  </div>
+)}
+
+{showTransferPin && (
+  <div className="transaction-card">
+    <h3>Enter Transaction PIN</h3>
+
+    <p>Enter your PIN to continue this transfer.</p>
+
+    <input
+      type="password"
+      inputMode="numeric"
+      maxLength={6}
+      placeholder="Enter PIN"
+      value={transferPin}
+      onChange={(e) =>
+        setTransferPin(e.target.value.replace(/\D/g, ""))
+      }
+    />
+
+    {pinMessage && <p>{pinMessage}</p>}
+
+    <button
+      type="button"
+      onClick={handleVerifyTransferPin}
+      disabled={pinLoading}
+    >
+      {pinLoading ? "Verifying..." : "Verify PIN"}
+    </button>
+  </div>
+)}
+
+<form onSubmit={handleTransfer}>
 
           <div className="transaction-details">
 
