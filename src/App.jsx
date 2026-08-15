@@ -1217,65 +1217,185 @@ function App() {
   // --------------------------------------------------
   // TRANSFER PAGE
   // --------------------------------------------------
+       function TransferPage({ onBack }) {
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
+  const [transferLoading, setTransferLoading] = useState(false)
+  const [transferMessage, setTransferMessage] = useState('')
 
-  function TransferPage() {
-    return (
-      <div className="page-content">
+  const handleTransfer = async (e) => {
+    e.preventDefault()
 
-        <div className="page-title-row">
-          <div>
-            <h1>Transfers</h1>
+    if (transferLoading) return
 
-            <p>
-              Review your recent transfer activity.
-            </p>
-          </div>
+    setTransferMessage('')
 
-          <BackButton />
+    const email = recipientEmail.trim()
+    const transferAmount = Number(amount)
+    const transferDescription = description.trim()
+
+    if (!email) {
+      setTransferMessage('Please enter the recipient email.')
+      return
+    }
+
+    if (!transferAmount || transferAmount <= 0) {
+      setTransferMessage('Please enter a valid amount.')
+      return
+    }
+
+    try {
+      setTransferLoading(true)
+
+      const { data: recipient, error: recipientError } = await supabase
+        .from('profiles')
+        .select('id, display_name, email')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (recipientError) {
+        throw recipientError
+      }
+
+      if (!recipient) {
+        setTransferMessage('Recipient was not found.')
+        return
+      }
+
+      const { error: transferError } = await supabase.rpc(
+        'transfer_money',
+        {
+          p_recipient_id: recipient.id,
+          p_amount: transferAmount,
+          p_description: transferDescription || null
+        }
+      )
+
+      if (transferError) {
+        throw transferError
+      }
+
+      setTransferMessage(
+        `Transfer of $${transferAmount.toFixed(2)} to ${
+          recipient.display_name || recipient.email
+        } was successful.`
+      )
+
+      setRecipientEmail('')
+      setAmount('')
+      setDescription('')
+
+    } catch (error) {
+      console.error('Transfer error:', error)
+
+      setTransferMessage(
+        error?.message || 'Transfer could not be completed.'
+      )
+    } finally {
+      setTransferLoading(false)
+    }
+  }
+
+  return (
+    <div className="page-content">
+
+      <div className="page-title-row">
+        <div>
+          <h1>Transfers</h1>
+          <p>Send money to another Crestline customer.</p>
         </div>
 
-        <div className="transaction-card">
+        <button
+          type="button"
+          className="back-dashboard-button"
+          onClick={onBack}
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
 
-          <div className="transaction-card-header">
-            <strong>
-              Recent Transfer
-            </strong>
+      <div className="transaction-card">
 
-            <span className="status-complete">
-              Completed
-            </span>
-          </div>
+        <div className="transaction-card-header">
+          <strong>Send Money</strong>
+        </div>
+
+        <form onSubmit={handleTransfer}>
 
           <div className="transaction-details">
 
             <div>
-              <span>Recipient</span>
-              <strong>Alex John</strong>
+              <span>Recipient Email</span>
+
+              <input
+                type="email"
+                value={recipientEmail}
+                onChange={(e) => {
+                  setRecipientEmail(e.target.value)
+                }}
+                placeholder="customer@example.com"
+                disabled={transferLoading}
+                autoComplete="off"
+              />
             </div>
 
             <div>
               <span>Amount</span>
-              <strong>$2,500.00</strong>
+
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={amount}
+                onChange={(e) => {
+                  setAmount(e.target.value)
+                }}
+                placeholder="0.00"
+                disabled={transferLoading}
+              />
             </div>
 
             <div>
-              <span>Date</span>
-              <strong>July 12, 2026</strong>
-            </div>
+              <span>Description</span>
 
-            <div>
-              <span>Type</span>
-              <strong>Bank Transfer</strong>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value)
+                }}
+                placeholder="Optional"
+                disabled={transferLoading}
+                autoComplete="off"
+              />
             </div>
 
           </div>
 
-        </div>
+          <button
+            type="submit"
+            className="primary-wide-button"
+            disabled={transferLoading}
+          >
+            {transferLoading
+              ? 'Processing...'
+              : 'Send Money'}
+          </button>
+
+        </form>
+
+        {transferMessage && (
+          <div className="transfer-message">
+            {transferMessage}
+          </div>
+        )}
 
       </div>
-    )
-  }
 
+    </div>
+  )
+}
   // --------------------------------------------------
   // WITHDRAW PAGE
   // --------------------------------------------------
@@ -3173,7 +3293,7 @@ function App() {
             <WalletPage />}
 
           {activePage === 'transfer' &&
-            <TransferPage />}
+            <TransferPage onBack={backToDashboard} />}
 
           {activePage === 'withdraw' &&
             <WithdrawPage />}
