@@ -424,6 +424,11 @@ function App() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
 
+   const [newPassword, setNewPassword] = useState('')
+const [confirmNewPassword, setConfirmNewPassword] = useState('')
+const [passwordMessage, setPasswordMessage] = useState('')
+const [changingPassword, setChangingPassword] = useState(false)
+
   // AUTH
   const [authMode, setAuthMode] = useState('login')
   const [email, setEmail] = useState('')
@@ -1108,6 +1113,45 @@ useEffect(() => {
     setMessages([])
     setActivePage('dashboard')
     setShowProfileMenu(false)
+  }
+
+  const handleChangePassword = async () => {
+  if (!newPassword || !confirmNewPassword) {
+    setPasswordMessage('Please enter and confirm your new password.')
+    return
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    setPasswordMessage('Passwords do not match.')
+    return
+  }
+
+  if (newPassword.length < 6) {
+    setPasswordMessage('Password must be at least 6 characters.')
+    return
+  }
+
+  setChangingPassword(true)
+  setPasswordMessage('')
+
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+
+    if (error) {
+      setPasswordMessage(error.message)
+      return
+    }
+
+    setPasswordMessage('Password changed successfully.')
+    setNewPassword('')
+    setConfirmNewPassword('')
+  } catch (error) {
+    setPasswordMessage('Unable to change password.')
+  } finally {
+    setChangingPassword(false)
+  }
   }
 
   // --------------------------------------------------
@@ -3470,6 +3514,37 @@ useEffect(() => {
                       ? 'Saving...'
                       : 'Save Profile'}
                   </button>
+                       <div className="password-section">
+  <label>New Password</label>
+
+  <input
+    type="password"
+    value={newPassword}
+    onChange={(e) => setNewPassword(e.target.value)}
+    placeholder="Enter new password"
+  />
+
+  <label>Confirm New Password</label>
+
+  <input
+    type="password"
+    value={confirmNewPassword}
+    onChange={(e) => setConfirmNewPassword(e.target.value)}
+    placeholder="Confirm new password"
+  />
+
+  <button
+    type="button"
+    onClick={handleChangePassword}
+    disabled={changingPassword}
+  >
+    {changingPassword ? 'Changing...' : 'Change Password'}
+  </button>
+
+  {passwordMessage && (
+    <small>{passwordMessage}</small>
+  )}
+</div>
 
                 </div>
 
