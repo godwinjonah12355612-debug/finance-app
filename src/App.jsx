@@ -431,6 +431,7 @@ const [changingPassword, setChangingPassword] = useState(false)
 
   // AUTH
   const [authMode, setAuthMode] = useState('login')
+  const [resetMode, setResetMode] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -592,13 +593,19 @@ useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        if (!mounted) return
+  (event, newSession) => {
+    if (!mounted) return
 
-        setSession(newSession)
-        setLoading(false)
-      }
-    )
+    if (event === 'PASSWORD_RECOVERY') {
+      setResetMode(true)
+      setSession(newSession)
+    } else {
+      setSession(newSession)
+    }
+
+    setLoading(false)
+  }
+)
 
     return () => {
       mounted = false
@@ -1030,6 +1037,43 @@ useEffect(() => {
     setPassword('')
   }
 
+  async function handleForgotPassword() {
+  setAuthMessage('')
+
+  const cleanEmail = email.trim()
+
+  if (!cleanEmail) {
+    setAuthMessage('Please enter your email address first.')
+    return
+  }
+
+  setAuthLoading(true)
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      cleanEmail,
+      {
+        redirectTo: window.location.origin,
+      }
+    )
+
+    if (error) {
+      throw error
+    }
+
+    setAuthMessage(
+      'Password reset link sent. Please check your email.'
+    )
+  } catch (error) {
+    setAuthMessage(
+      error.message || 'Unable to send password reset email.'
+    )
+  } finally {
+    setAuthLoading(false)
+  }
+}
+
+
   // --------------------------------------------------
   // SIGN UP
   // --------------------------------------------------
@@ -1192,11 +1236,70 @@ useEffect(() => {
   }
 
   // --------------------------------------------------
-  // LOGIN / SIGNUP
-  // --------------------------------------------------
+// LOGIN / SIGNUP
+// --------------------------------------------------
 
-  if (!session) {
-    const isLogin = authMode === 'login'
+if (resetMode) {
+  return (
+    <div className="app">
+      <div className="login-card">
+
+        <div className="bank-logo">
+          ◆
+        </div>
+
+        <h1>Reset Password</h1>
+
+        <p className="subtitle">
+          Enter your new password
+        </p>
+
+        {passwordMessage && (
+          <div className="auth-message">
+            {passwordMessage}
+          </div>
+        )}
+
+        <label>New Password</label>
+
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) =>
+            setNewPassword(e.target.value)
+          }
+          placeholder="Enter new password"
+        />
+
+        <label>Confirm New Password</label>
+
+        <input
+          type="password"
+          value={confirmNewPassword}
+          onChange={(e) =>
+            setConfirmNewPassword(e.target.value)
+          }
+          placeholder="Confirm new password"
+        />
+
+        <button
+          type="button"
+          className="sign-in-button"
+          onClick={handleChangePassword}
+          disabled={changingPassword}
+        >
+          {changingPassword
+            ? 'Updating...'
+            : 'Reset Password'}
+        </button>
+
+      </div>
+    </div>
+  )
+}
+
+if (!session) {
+  const isLogin = authMode === 'login'
 
     return (
       <div className="app">
@@ -1268,6 +1371,16 @@ useEffect(() => {
               }
               placeholder="Enter password"
             />
+            {isLogin && (
+  <button
+    type="button"
+    className="forgot-password-button"
+    onClick={handleForgotPassword}
+    disabled={authLoading}
+  >
+    Forgot Password?
+  </button>
+)}
 
             {!isLogin && (
               <>

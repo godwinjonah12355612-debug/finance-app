@@ -4311,3 +4311,26 @@ body,
     padding: 13px;
   }
 }
+
+
+.forgot-password-button {
+  display: block;
+  width: 100%;
+  margin: 8px 0 16px;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: right;
+}
+
+.forgot-password-button:hover {
+  text-decoration: underline;
+}
+
+.forgot-password-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
