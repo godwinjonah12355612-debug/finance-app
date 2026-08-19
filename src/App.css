@@ -4334,3 +4334,47 @@ body,
   opacity: 0.6;
   cursor: not-allowed;
 }
+.account-notice-card {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px;
+  text-align: center;
+}
+
+.account-notice-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.account-notice-content h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 30px;
+}
+
+.account-notice-content p {
+  font-size: 17px;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.account-notice-content strong {
+  font-weight: 700;
+}
+
+.account-notice-final {
+  font-size: 18px !important;
+  margin-top: 30px;
+}
+
+.notice-support-button {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 15px;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}

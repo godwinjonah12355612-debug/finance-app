@@ -1770,6 +1770,80 @@ if (!session) {
     )
   }
 
+  function NoticePage() {
+  return (
+    <div className="page-content">
+
+      <div className="page-title-row">
+        <div>
+          <h1>Important Account Notice</h1>
+
+          <p>
+            Please read the following information carefully.
+          </p>
+        </div>
+
+        <BackButton />
+      </div>
+
+      <section className="dashboard-card account-notice-card">
+
+        <div className="account-notice-icon">
+          ⚠️
+        </div>
+
+        <div className="account-notice-content">
+
+          <h2>
+            IMPORTANT ACCOUNT NOTICE
+          </h2>
+
+          <p>
+            <strong>
+              This account is strictly a personal account
+              and is intended for authorized personal use only.
+            </strong>
+          </p>
+
+          <p>
+            <strong>
+              Please allow the required processing period
+              to elapse before attempting to proceed with
+              any pending transaction or account activity.
+            </strong>
+          </p>
+
+          <p>
+            <strong>
+              If you require clarification, additional
+              information, or assistance regarding this
+              account, please contact Customer Support
+              before taking any further action.
+            </strong>
+          </p>
+
+          <p className="account-notice-final">
+            <strong>
+              Your patience and cooperation are sincerely appreciated.
+            </strong>
+          </p>
+
+        </div>
+
+        <button
+          type="button"
+          className="notice-support-button"
+          onClick={() => navigate('support')}
+        >
+          💬 Contact Customer Support
+        </button>
+
+      </section>
+
+    </div>
+  )
+}
+
   
   // --------------------------------------------------
   // WITHDRAW PAGE
@@ -2489,6 +2563,66 @@ if (!session) {
     </div>
   )
 }
+
+function PasswordPage() {
+  return (
+    <div className="page-content">
+
+      <div className="page-title-row">
+        <div>
+          <h1>Password</h1>
+
+          <p>
+            Change your account password.
+          </p>
+        </div>
+
+        <BackButton />
+      </div>
+
+      <div className="password-section">
+
+        <label>Password</label>
+
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) =>
+            setNewPassword(e.target.value)
+          }
+          placeholder="Enter new password"
+        />
+
+        <label>Confirm Password</label>
+
+        <input
+          type="password"
+          value={confirmNewPassword}
+          onChange={(e) =>
+            setConfirmNewPassword(e.target.value)
+          }
+          placeholder="Confirm new password"
+        />
+
+        <button
+          type="button"
+          onClick={handleChangePassword}
+          disabled={changingPassword}
+        >
+          {changingPassword
+            ? 'Changing...'
+            : 'Change Password'}
+        </button>
+
+        {passwordMessage && (
+          <small>{passwordMessage}</small>
+        )}
+
+      </div>
+
+    </div>
+  )
+}
   // --------------------------------------------------
   // MORE PAGE
   // --------------------------------------------------
@@ -2551,6 +2685,22 @@ if (!session) {
         icon: '₿',
         page: 'wallet',
       },
+
+      {
+  title: 'Password',
+  description:
+    'Change your account password.',
+  icon: '🔒',
+  page: 'password',
+    },
+
+      {
+         title:      'Important Account Notice',
+           description:
+        'Important information about your personal account and account activity.',
+        icon: '⚠️',
+      page: 'notice',
+       },
     ]
 
     return (
@@ -2608,6 +2758,8 @@ if (!session) {
       </div>
     )
   }
+
+  
 
   // --------------------------------------------------
   // DASHBOARD
@@ -3627,38 +3779,7 @@ if (!session) {
                       ? 'Saving...'
                       : 'Save Profile'}
                   </button>
-                       <div className="password-section">
-  <label>New Password</label>
-
-  <input
-    type="password"
-    value={newPassword}
-    onChange={(e) => setNewPassword(e.target.value)}
-    placeholder="Enter new password"
-  />
-
-  <label>Confirm New Password</label>
-
-  <input
-    type="password"
-    value={confirmNewPassword}
-    onChange={(e) => setConfirmNewPassword(e.target.value)}
-    placeholder="Confirm new password"
-  />
-
-  <button
-    type="button"
-    onClick={handleChangePassword}
-    disabled={changingPassword}
-  >
-    {changingPassword ? 'Changing...' : 'Change Password'}
-  </button>
-
-  {passwordMessage && (
-    <small>{passwordMessage}</small>
-  )}
-</div>
-
+                       
                 </div>
 
                 <label className="upload-avatar-button">
@@ -3705,6 +3826,12 @@ if (!session) {
 
           {activePage === 'wallet' &&
             <WalletPage />}
+
+            {activePage === 'password' &&
+         <PasswordPage />}
+
+            {activePage === 'notice' &&
+         <NoticePage />}
 
           {activePage === 'transfer' &&
             <TransferPage
