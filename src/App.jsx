@@ -2564,7 +2564,52 @@ if (!session) {
   )
 }
 
-function PasswordPage() {
+     function PasswordPage() {
+  const [pagePassword, setPagePassword] = useState('')
+  const [pageConfirmPassword, setPageConfirmPassword] = useState('')
+  const [pageMessage, setPageMessage] = useState('')
+  const [pageLoading, setPageLoading] = useState(false)
+
+  const handlePagePasswordChange = async () => {
+    setPageMessage('')
+
+    if (!pagePassword || !pageConfirmPassword) {
+      setPageMessage('Please enter and confirm your new password.')
+      return
+    }
+
+    if (pagePassword !== pageConfirmPassword) {
+      setPageMessage('Passwords do not match.')
+      return
+    }
+
+    if (pagePassword.length < 6) {
+      setPageMessage('Password must be at least 6 characters.')
+      return
+    }
+
+    setPageLoading(true)
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: pagePassword,
+      })
+
+      if (error) {
+        setPageMessage(error.message)
+        return
+      }
+
+      setPageMessage('Password changed successfully.')
+      setPagePassword('')
+      setPageConfirmPassword('')
+    } catch (error) {
+      setPageMessage('Unable to change password.')
+    } finally {
+      setPageLoading(false)
+    }
+  }
+
   return (
     <div className="page-content">
 
@@ -2586,36 +2631,36 @@ function PasswordPage() {
 
         <input
           type="password"
-          value={newPassword}
-          onChange={(e) =>
-            setNewPassword(e.target.value)
-          }
+          value={pagePassword}
+          onChange={(e) => setPagePassword(e.target.value)}
           placeholder="Enter new password"
+          autoComplete="new-password"
         />
 
         <label>Confirm Password</label>
 
         <input
           type="password"
-          value={confirmNewPassword}
+          value={pageConfirmPassword}
           onChange={(e) =>
-            setConfirmNewPassword(e.target.value)
+            setPageConfirmPassword(e.target.value)
           }
           placeholder="Confirm new password"
+          autoComplete="new-password"
         />
 
         <button
           type="button"
-          onClick={handleChangePassword}
-          disabled={changingPassword}
+          onClick={handlePagePasswordChange}
+          disabled={pageLoading}
         >
-          {changingPassword
+          {pageLoading
             ? 'Changing...'
             : 'Change Password'}
         </button>
 
-        {passwordMessage && (
-          <small>{passwordMessage}</small>
+        {pageMessage && (
+          <small>{pageMessage}</small>
         )}
 
       </div>
@@ -2623,7 +2668,7 @@ function PasswordPage() {
     </div>
   )
 }
-  // --------------------------------------------------
+      // --------------------------------------------------
   // MORE PAGE
   // --------------------------------------------------
 
