@@ -2563,18 +2563,23 @@ if (!session) {
     </div>
   )
 }
-
-     function PasswordPage() {
+  
+function PasswordPage() {
   const [pagePassword, setPagePassword] = useState('')
   const [pageConfirmPassword, setPageConfirmPassword] = useState('')
   const [pageMessage, setPageMessage] = useState('')
   const [pageLoading, setPageLoading] = useState(false)
 
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   const handlePagePasswordChange = async () => {
     setPageMessage('')
 
     if (!pagePassword || !pageConfirmPassword) {
-      setPageMessage('Please enter and confirm your new password.')
+      setPageMessage(
+        'Please enter and confirm your new password.'
+      )
       return
     }
 
@@ -2584,7 +2589,9 @@ if (!session) {
     }
 
     if (pagePassword.length < 6) {
-      setPageMessage('Password must be at least 6 characters.')
+      setPageMessage(
+        'Password must be at least 6 characters.'
+      )
       return
     }
 
@@ -2600,74 +2607,218 @@ if (!session) {
         return
       }
 
-      setPageMessage('Password changed successfully.')
+      setPageMessage(
+        'Password changed successfully.'
+      )
+
       setPagePassword('')
       setPageConfirmPassword('')
     } catch (error) {
-      setPageMessage('Unable to change password.')
+      setPageMessage(
+        'Unable to change password.'
+      )
     } finally {
       setPageLoading(false)
     }
   }
 
   return (
-    <div className="page-content">
+    <div className="page-content password-page">
 
-      <div className="page-title-row">
+      <div className="page-title-row password-page-title">
         <div>
-          <h1>Password</h1>
+          <div className="password-title-icon">
+            🔐
+          </div>
+
+          <h1>Change Password</h1>
 
           <p>
-            Change your account password.
+            Keep your account secure by choosing a strong password.
           </p>
         </div>
 
         <BackButton />
       </div>
 
-      <div className="password-section">
+      <section className="password-card">
 
-        <label>Password</label>
+        <div className="password-card-header">
 
-        <input
-          type="password"
-          value={pagePassword}
-          onChange={(e) => setPagePassword(e.target.value)}
-          placeholder="Enter new password"
-          autoComplete="new-password"
-        />
+          <div className="password-card-icon">
+            🔒
+          </div>
 
-        <label>Confirm Password</label>
+          <div>
+            <h2>Update your password</h2>
 
-        <input
-          type="password"
-          value={pageConfirmPassword}
-          onChange={(e) =>
-            setPageConfirmPassword(e.target.value)
-          }
-          placeholder="Confirm new password"
-          autoComplete="new-password"
-        />
+            <p>
+              Enter your new password below. Your password must
+              contain at least 6 characters.
+            </p>
+          </div>
 
-        <button
-          type="button"
-          onClick={handlePagePasswordChange}
-          disabled={pageLoading}
-        >
-          {pageLoading
-            ? 'Changing...'
-            : 'Change Password'}
-        </button>
+        </div>
 
-        {pageMessage && (
-          <small>{pageMessage}</small>
-        )}
+        <div className="password-form">
 
-      </div>
+          {/* NEW PASSWORD */}
+
+          <div className="password-field">
+
+            <label htmlFor="new-password">
+              New Password
+            </label>
+
+            <div className="password-input-wrap">
+
+              <input
+                id="new-password"
+                type={
+                  showPassword
+                    ? 'text'
+                    : 'password'
+                }
+                value={pagePassword}
+                onChange={(e) =>
+                  setPagePassword(e.target.value)
+                }
+                placeholder="Enter your new password"
+                autoComplete="new-password"
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() =>
+                  setShowPassword(
+                    (previous) => !previous
+                  )
+                }
+                aria-label={
+                  showPassword
+                    ? 'Hide password'
+                    : 'Show password'
+                }
+              >
+                {showPassword
+                  ? '🙈'
+                  : '👁️'}
+              </button>
+
+            </div>
+
+          </div>
+
+
+          {/* CONFIRM PASSWORD */}
+
+          <div className="password-field">
+
+            <label htmlFor="confirm-password">
+              Confirm Password
+            </label>
+
+            <div className="password-input-wrap">
+
+              <input
+                id="confirm-password"
+                type={
+                  showConfirmPassword
+                    ? 'text'
+                    : 'password'
+                }
+                value={pageConfirmPassword}
+                onChange={(e) =>
+                  setPageConfirmPassword(
+                    e.target.value
+                  )
+                }
+                placeholder="Confirm your new password"
+                autoComplete="new-password"
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() =>
+                  setShowConfirmPassword(
+                    (previous) => !previous
+                  )
+                }
+                aria-label={
+                  showConfirmPassword
+                    ? 'Hide password'
+                    : 'Show password'
+                }
+              >
+                {showConfirmPassword
+                  ? '🙈'
+                  : '👁️'}
+              </button>
+
+            </div>
+
+          </div>
+
+
+          {/* REQUIREMENTS */}
+
+          <div className="password-requirements">
+
+            <strong>
+              Password requirements
+            </strong>
+
+            <span>
+              ✓ At least 6 characters
+            </span>
+
+            <span>
+              ✓ Use a password you do not use elsewhere
+            </span>
+
+          </div>
+
+
+          {/* CHANGE PASSWORD BUTTON */}
+
+          <button
+            type="button"
+            className="password-change-button"
+            onClick={handlePagePasswordChange}
+            disabled={pageLoading}
+          >
+            {pageLoading
+              ? 'Changing Password...'
+              : 'Change Password'}
+          </button>
+
+
+          {/* MESSAGE */}
+
+          {pageMessage && (
+            <div
+              className={`password-message ${
+                pageMessage.includes(
+                  'successfully'
+                )
+                  ? 'success'
+                  : 'error'
+              }`}
+            >
+              {pageMessage}
+            </div>
+          )}
+
+        </div>
+
+      </section>
 
     </div>
   )
 }
+
       // --------------------------------------------------
   // MORE PAGE
   // --------------------------------------------------
