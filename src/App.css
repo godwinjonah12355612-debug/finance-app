@@ -931,10 +931,10 @@ img {
 
 .page-title-row h1 {
   margin: 0;
-
   font-size: 27px;
-
   letter-spacing: -0.7px;
+  color: #101828 !important;
+  font-weight: 700;
 }
 
 .page-title-row p {
@@ -963,10 +963,10 @@ img {
 
 .welcome-row h1 {
   margin: 0;
-
   font-size: 27px;
-
   letter-spacing: -0.7px;
+  color: #101828;
+  font-weight: 700;
 }
 
 .welcome-row p {
@@ -4350,6 +4350,7 @@ body,
   font-size: 26px;
   font-weight: 800;
   margin-bottom: 30px;
+  color: #101828 !important;
 }
 
 .account-notice-content p {
