@@ -419,6 +419,7 @@ function App() {
   const [profileName, setProfileName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [balance, setBalance] = useState(0)
+  const [profileLoading, setProfileLoading] = useState(true)
    const [accountNumber, setAccountNumber] = useState('')
   const [routingNumber, setRoutingNumber] = useState('')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
@@ -617,20 +618,31 @@ useEffect(() => {
   // LOAD PROFILE + BALANCE
   // --------------------------------------------------
 
-  useEffect(() => {
-    let mounted = true
+ useEffect(() => {
+  let mounted = true
 
-    async function loadProfile() {
-      if (!session?.user?.id) {
+  async function loadProfile() {
+    setProfileLoading(true)
+
+    if (!session?.user?.id) {
+      if (mounted) {
         setProfileName('')
         setAvatarUrl('')
         setBalance(0)
-        return
+        setAccountNumber('')
+        setRoutingNumber('')
+        setProfileLoading(false)
       }
 
+      return
+    }
+
+    try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url, balance, account_number, routing_number')
+        .select(
+          'display_name, avatar_url, balance, account_number, routing_number'
+        )
         .eq('id', session.user.id)
         .maybeSingle()
 
@@ -638,21 +650,23 @@ useEffect(() => {
 
       if (error) {
         console.error('Profile loading error:', error)
+
+        setProfileName('')
+        setAvatarUrl('')
+        setProfileLoading(false)
+
+        return
       }
 
-      const metadata = session.user.user_metadata || {}
-
-      const metadataName =
-        typeof metadata.full_name === 'string'
-          ? metadata.full_name.trim()
-          : ''
-
       setProfileName(
-        typeof data?.display_name === 'string' &&
-          data.display_name.trim()
+        typeof data?.display_name === 'string'
           ? data.display_name.trim()
-          : metadataName
+          : ''
       )
+      console.log('PROFILE NAME:', {
+  userId: session.user.id,
+  databaseName: data?.display_name,
+})
 
       setAvatarUrl(
         typeof data?.avatar_url === 'string'
@@ -665,16 +679,28 @@ useEffect(() => {
           ? data.balance
           : Number(data?.balance || 0)
       )
+
       setAccountNumber(data?.account_number || '')
       setRoutingNumber(data?.routing_number || '')
-    }
 
-    loadProfile()
+      setProfileLoading(false)
 
-    return () => {
-      mounted = false
+    } catch (error) {
+      console.error('Unexpected profile loading error:', error)
+
+      if (mounted) {
+        setProfileName('')
+        setProfileLoading(false)
+      }
     }
-  }, [session?.user?.id])
+  }
+
+  loadProfile()
+
+  return () => {
+    mounted = false
+  }
+}, [session?.user?.id])
 
   // --------------------------------------------------
   // APPROVAL
@@ -2969,7 +2995,7 @@ function PasswordPage() {
 
           <div>
             <h1>
-              Good day, {displayName} 👋
+             Good day, {profileLoading ? '...' : displayName} 👋
             </h1>
 
             <p>
